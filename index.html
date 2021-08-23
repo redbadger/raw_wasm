@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script type="module">
+import {
+  testWasm,
+  showTestSummary,
+  showTestReport
+} from "./js/wasmTest.js"
+
+const SHOW_DETAIL = false
+
+// -----------------------------------------------------------------------------
+// Since WASM has no maths library of its own, log and trigonometric functions
+// must be supplied by the host environment
+let hostFunctions = {
+  math: {
+    sin   : Math.sin,
+    cos   : Math.cos,
+    sinh  : Math.sinh,
+    cosh  : Math.cosh,
+    ln    : Math.log,
+    atan2 : Math.atan2
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Create an instance of the WASM module, then pass it to the test framework
+WebAssembly
+  .instantiateStreaming(fetch('./complex.wasm'), hostFunctions)
+  .then(obj => {
+    let testReport = testWasm(obj.instance)
+
+    showTestSummary(testReport)
+
+    if (SHOW_DETAIL) showTestReport(testReport)
+  })
+</script>
+</body>
