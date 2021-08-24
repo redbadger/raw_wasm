@@ -17,7 +17,7 @@ To see a detail test report, in `index.html`, change the `SHOW_DETAIL` variable 
 
 ## ToDos
 
-At the moment, when certain errors take place (such as division by zero), the WASM code will invoke the intruction `unreachable`.  This will raise an unexplained exception in the host environment.
+At the moment, when certain errors take place (such as division by zero), the WASM code will invoke the instruction `unreachable`.  This will raise an unexplained exception in the host environment.
 
 All such statements need to be replaced with `trap` statements.
 
