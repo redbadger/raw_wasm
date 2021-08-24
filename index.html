@@ -6,11 +6,10 @@
 <script type="module">
 import {
   testWasm,
-  showTestSummary,
   showTestReport
 } from "./js/wasmTest.js"
 
-const SHOW_DETAIL = false
+const SHOW_DETAIL = true
 
 // -----------------------------------------------------------------------------
 // Since WASM has no maths library of its own, log and trigonometric functions
@@ -30,12 +29,6 @@ let hostFunctions = {
 // Create an instance of the WASM module, then pass it to the test framework
 WebAssembly
   .instantiateStreaming(fetch('./complex.wasm'), hostFunctions)
-  .then(obj => {
-    let testReport = testWasm(obj.instance)
-
-    showTestSummary(testReport)
-
-    if (SHOW_DETAIL) showTestReport(testReport)
-  })
+  .then(wasmObj => showTestReport(testWasm(wasmObj.instance), SHOW_DETAIL))
 </script>
 </body>
