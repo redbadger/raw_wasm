@@ -5,11 +5,16 @@
 <body>
 <script type="module">
 import {
+  packageWasmExports,
+  createWasmLib
+} from "./js/utils.js"
+
+import {
   testWasm,
   showTestReport
 } from "./js/wasmTest.js"
 
-const SHOW_DETAIL = true
+const SHOW_DETAIL = false
 
 // -----------------------------------------------------------------------------
 // Since WASM has no maths library of its own, log and trigonometric functions
@@ -27,8 +32,13 @@ let hostFunctions = {
 
 // -----------------------------------------------------------------------------
 // Create an instance of the WASM module, then pass it to the test framework
-WebAssembly
-  .instantiateStreaming(fetch('./complex.wasm'), hostFunctions)
-  .then(wasmObj => showTestReport(testWasm(wasmObj.instance), SHOW_DETAIL))
+  createWasmLib('./complex.wasm', 'cplx', hostFunctions)
+    .then(({wasmObj, cplxFns}) => {
+      showTestReport(testWasm(wasmObj.instance), SHOW_DETAIL)
+      // Object
+      //   .keys(cplxFns.cplx)
+      //   .map(fn => console.log(`${fn} : ${cplxFns.cplx[fn]}`))
+    })
+
 </script>
 </body>

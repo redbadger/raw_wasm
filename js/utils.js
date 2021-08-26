@@ -1,3 +1,5 @@
+const setProperty = (obj, propName, propVal) => (_ => obj)(obj[propName] = propVal)
+
 const typeOf     = x => Object.prototype.toString.apply(x).slice(8).slice(0, -1)
 const isOfType   = t => x => typeOf(x) === t
 const isArray    = isOfType("Array")
@@ -6,6 +8,11 @@ const isFunction = isOfType("Function")
 // These tolerance values are somewhat arbitrary...
 const F64 = { "label": "f64", "tolerance" : 0.0000000000000005 }
 const F32 = { "label": "f32", "tolerance" : 0.0000000000000005 }
+
+// -----------------------------------------------------------------------------
+const TWO_F64_IN_ONE_F64_OUT  = { "input" : [F64, F64],           "output" : [F64] }
+const TWO_F64_IN_TWO_F64_OUT  = { "input" : [F64, F64],           "output" : [F64, F64] }
+const FOUR_F64_IN_TWO_F64_OUT = { "input" : [F64, F64, F64, F64], "output" : [F64, F64] }
 
 // Yeah, whatever...
 const closeEnough = (tol, val, req) => req + tol >= val && req - tol <= val
@@ -50,9 +57,31 @@ const checkArrayEquality =
   }
 
 // -----------------------------------------------------------------------------
-const TWO_F64_IN_ONE_F64_OUT  = { "input" : [F64, F64],           "output" : [F64] }
-const TWO_F64_IN_TWO_F64_OUT  = { "input" : [F64, F64],           "output" : [F64, F64] }
-const FOUR_F64_IN_TWO_F64_OUT = { "input" : [F64, F64, F64, F64], "output" : [F64, F64] }
+// Unload all the exports of a WASM instance and package them into the `libName`
+// property of the `hostFns` object
+//
+// The `hostFns` object uses a two-level namespace where the top level
+// identifies the library name and the second level identifies the function
+// within that library.
+const packageWasmExports = (wasmObj, libName, hostFns) =>
+  Object
+  .keys(wasmObj.instance.exports)
+  .reduce(
+    (acc, exp) => (_ => acc)(acc[libName][exp] = wasmObj.instance.exports[exp]),
+    setProperty(hostFns, libName, {}))
+
+// -----------------------------------------------------------------------------
+// Create a new instance of a WASM module passing in the `hostFns` object to
+// satisfy any imports that module might have
+// Once instantiated, the `hostsFns` object is then extended to include anything
+// exported by the new WASM instance
+const createWasmLib = (src, libName, hostFns) =>
+  WebAssembly
+  .instantiateStreaming(fetch(src), hostFns)
+  .then(wasmObj => ({
+      wasmObj : wasmObj,
+      hostFns : packageWasmExports(wasmObj, libName, hostFns)
+    }))
 
 // -----------------------------------------------------------------------------
 // Public API
@@ -67,5 +96,8 @@ export {
   TWO_F64_IN_TWO_F64_OUT,
   FOUR_F64_IN_TWO_F64_OUT,
 
-  checkArrayEquality
+  checkArrayEquality,
+
+  packageWasmExports,
+  createWasmLib
 }

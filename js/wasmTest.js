@@ -86,13 +86,18 @@ const testWasm =
 const showTestReport =
   (testReport, showDetail) => {
     // Write test summary
-    if (testReport.missing) {
-      console.warn(`${testReport.missing} WASM export test${testReport.missing === 1 ? "" : "s"} missing`)
-    } else {
-      console.log(`All WASM exports tested`)
-    }
+    let total = testReport.passed + testReport.failed
 
-    console.log(`Performed ${testReport.passed + testReport.failed} tests: ${testReport.passed} passed, ${testReport.failed} failed`)
+    if (testReport.missing)
+      console.warn(
+        `${testReport.missing} WASM export test${testReport.missing === 1 ? "" : "s"} missing`
+      )
+    else
+      console.log(`All WASM exports tested`)
+
+    console.log(
+      `Performed ${total} tests: ${testReport.passed} passed, ${testReport.failed} failed`
+    )
 
     // Optionally, write test details
     if (showDetail) showTestDetail(testReport)
