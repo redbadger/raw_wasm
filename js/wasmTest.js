@@ -100,21 +100,23 @@ const showTestReport =
     )
 
     // Optionally, write test details
-    if (showDetail) showTestDetail(testReport)
+    showTestDetail(testReport, showDetail)
   }
 
 // -----------------------------------------------------------------------------
 const showTestDetail =
-  testReport =>
-    testReport
-      .testList
-      .filter(test => test.outcomes.every(o => !(o.equal || o.withinTolerance)))
-      .map(test => {
-        console.log(test.description)
-        test.outcomes.map(
-          o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
-        )
-      })
+  (testReport, showDetail) =>
+    showDetail
+    ? testReport
+        .testList
+        .filter(test => test.outcomes.every(o => !(o.equal || o.withinTolerance)))
+        .map(test => {
+          console.log(test.description)
+          test.outcomes.map(
+            o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
+          )
+        })
+    : null
 
 // -----------------------------------------------------------------------------
 // Public API
