@@ -159,24 +159,22 @@ const showTestReport =
     )
 
     // Optionally, write test details
-    showTestDetail(testReport, showDetail)
+    if (showDetail) showTestDetail(testReport)
   }
 
 // -----------------------------------------------------------------------------
 const showTestDetail =
-  (testReport, showDetail) =>
-    showDetail
-    ? testReport
-        .testList
-        .map(test => {
-          console.log(test.description)
+  testReport =>
+    testReport
+      .testList
+      .map(test => {
+        console.log(test.description)
 
-          if (test.outcomes.length > 0)
-            test.outcomes.map(
-              o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
-            )
-        })
-    : null
+        if (test.outcomes.length > 0)
+          test.outcomes.map(
+            o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
+          )
+      })
 
 // -----------------------------------------------------------------------------
 const showHostFns =
