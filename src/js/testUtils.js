@@ -1,18 +1,8 @@
-const typeOf     = x => Object.prototype.toString.apply(x).slice(8).slice(0, -1)
-const isOfType   = t => x => typeOf(x) === t
-const isArray    = isOfType("Array")
-const isFunction = isOfType("Function")
-
-// These tolerance values are somewhat arbitrary...
-const F64 = { "label": "f64", "tolerance" : 0.0000000000000005 }
-const F32 = { "label": "f32", "tolerance" : 0.0000000000000005 }
+import { isArray } from './genericUtils.js'
+import { F32, F64 } from './wasmUtils.js'
 
 // -----------------------------------------------------------------------------
-const TWO_F64_IN_ONE_F64_OUT  = { "input" : [F64, F64],           "output" : [F64] }
-const TWO_F64_IN_TWO_F64_OUT  = { "input" : [F64, F64],           "output" : [F64, F64] }
-const FOUR_F64_IN_TWO_F64_OUT = { "input" : [F64, F64, F64, F64], "output" : [F64, F64] }
-
-// Yeah, whatever...
+// Yeah, they're equal-ish...
 const closeEnough = (tol, val, req) => req + tol >= val && req - tol <= val
 
 // -----------------------------------------------------------------------------
@@ -191,17 +181,6 @@ const showHostFns =
 // Public API
 // -----------------------------------------------------------------------------
 export {
-  isArray,
-  isFunction,
-
-  F64,
-  F32,
-  TWO_F64_IN_ONE_F64_OUT,
-  TWO_F64_IN_TWO_F64_OUT,
-  FOUR_F64_IN_TWO_F64_OUT,
-
-  checkArrayEquality,
-
   testWasm,
   showTestReport,
   showHostFns,

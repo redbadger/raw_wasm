@@ -1,6 +1,13 @@
-const setProperty =
-  (obj, propName, propVal) =>
-    (_ => obj)(obj[propName] = propVal)
+import { setProperty } from './genericUtils.js'
+
+// These tolerance values are somewhat arbitrary...
+const F64 = { "label": "f64", "tolerance" : 0.0000000000000005 }
+const F32 = { "label": "f32", "tolerance" : 0.0000000000000005 }
+
+// -----------------------------------------------------------------------------
+const TWO_F64_IN_ONE_F64_OUT  = { "input" : [F64, F64],           "output" : [F64] }
+const TWO_F64_IN_TWO_F64_OUT  = { "input" : [F64, F64],           "output" : [F64, F64] }
+const FOUR_F64_IN_TWO_F64_OUT = { "input" : [F64, F64, F64, F64], "output" : [F64, F64] }
 
 // -----------------------------------------------------------------------------
 // Unload all the exports of a WASM instance and package them into the `libName`
@@ -36,4 +43,10 @@ async function instantiateWasmModuleSequence(wasmSequence, hostFunctions) {
 // -----------------------------------------------------------------------------
 export {
   instantiateWasmModuleSequence,
+
+  F64,
+  F32,
+  TWO_F64_IN_ONE_F64_OUT,
+  TWO_F64_IN_TWO_F64_OUT,
+  FOUR_F64_IN_TWO_F64_OUT,
 }

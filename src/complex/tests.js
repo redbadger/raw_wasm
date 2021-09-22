@@ -2,7 +2,7 @@ import {
   TWO_F64_IN_ONE_F64_OUT,
   TWO_F64_IN_TWO_F64_OUT,
   FOUR_F64_IN_TWO_F64_OUT
-} from "../js/testUtils.js"
+} from "../js/wasmUtils.js"
 
 const complexTestMap = new Map()
 
