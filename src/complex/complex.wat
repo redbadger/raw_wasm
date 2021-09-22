@@ -1,13 +1,12 @@
 (module
   ;; ---------------------------------------------------------------------------
   ;; Trig and log functions must be imported from the host environment
-  (import "math" "sin"   (func $host_sin   (param f64) (result f64)))
-  (import "math" "cos"   (func $host_cos   (param f64) (result f64)))
-  (import "math" "sinh"  (func $host_sinh  (param f64) (result f64)))
-  (import "math" "cosh"  (func $host_cosh  (param f64) (result f64)))
-  (import "math" "ln"    (func $host_ln    (param f64) (result f64)))
-  (import "math" "atan2" (func $host_atan2 (param f64)
-                                           (param f64) (result f64)))
+  (import "math" "sin"   (func $host_sin   (param f64)     (result f64)))
+  (import "math" "cos"   (func $host_cos   (param f64)     (result f64)))
+  (import "math" "sinh"  (func $host_sinh  (param f64)     (result f64)))
+  (import "math" "cosh"  (func $host_cosh  (param f64)     (result f64)))
+  (import "math" "ln"    (func $host_ln    (param f64)     (result f64)))
+  (import "math" "atan2" (func $host_atan2 (param f64 f64) (result f64)))
 
   (global $PI       f64 (f64.const  3.141592653589793))
   (global $MINUS_PI f64 (f64.const -3.141592653589793))
@@ -443,6 +442,34 @@
         (f64.const 1) (f64.const 0)
         (call $sqr (local.get $a) (local.get $b))
       )
+    )
+  )
+
+  ;; ---------------------------------------------------------------------------
+  ;; Sum of squares of two values
+  ;; sum_of_sqrs(x:f64, y:f64):f64 => x^2 + y^2
+  (func $sum_of_sqrs
+        (export "sum_of_sqrs")
+        (param $x f64)
+        (param $y f64)
+        (result f64)
+    (f64.add
+      (f64.mul (local.get $x) (local.get $x))
+      (f64.mul (local.get $y) (local.get $y))
+    )
+  )
+
+  ;; ---------------------------------------------------------------------------
+  ;; Difference of squares of two values
+  ;; diff_of_sqrs(x:f64, y:f64):f64 => x^2 - y^2
+  (func $diff_of_sqrs
+        (export "diff_of_sqrs")
+        (param $x f64)
+        (param $y f64)
+        (result f64)
+    (f64.sub
+      (f64.mul (local.get $x) (local.get $x))
+      (f64.mul (local.get $y) (local.get $y))
     )
   )
 

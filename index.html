@@ -5,15 +5,15 @@
 <body>
 <script type="module">
 import {
-  packageWasmExports,
-  createWasmLib
-} from "./js/utils.js"
-
-import {
+  showTestReport,
+  showHostFns,
   testWasm,
-  showTestReport
-} from "./js/wasmTest.js"
+} from "./src/js/testUtils.js"
 
+import { createWasmLib } from "./src/js/wasmUtils.js"
+import { complexTestMap } from "./src/complex/tests.js"
+
+const TEST_MODE   = false
 const SHOW_DETAIL = false
 
 // -----------------------------------------------------------------------------
@@ -32,13 +32,18 @@ let hostFunctions = {
 
 // -----------------------------------------------------------------------------
 // Create an instance of the WASM module, then pass it to the test framework
-  createWasmLib('./complex.wasm', 'cplx', hostFunctions)
-    .then(({wasmObj, cplxFns}) => {
-      showTestReport(testWasm(wasmObj.instance), SHOW_DETAIL)
-      // Object
-      //   .keys(cplxFns.cplx)
-      //   .map(fn => console.log(`${fn} : ${cplxFns.cplx[fn]}`))
-    })
+async function start() {
+  const complexMod = await createWasmLib('./build/complex.wasm', 'cplx', hostFunctions)
 
+  testWasm(TEST_MODE, complexMod.wasmObj.instance, complexTestMap, SHOW_DETAIL)
+
+  const mandelMod = await createWasmLib('./build/mandel.wasm', 'mandel', complexMod.hostFns)
+
+  // showHostFns(mandelMod)
+
+  console.log(`mandelMod.hostFns.mandel.test_add(3,0,4,0) = ${mandelMod.hostFns.mandel.test_add(3,0,4,0)}`)
+}
+
+  start()
 </script>
 </body>

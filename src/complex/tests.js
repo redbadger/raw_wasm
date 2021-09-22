@@ -2,11 +2,11 @@ import {
   TWO_F64_IN_ONE_F64_OUT,
   TWO_F64_IN_TWO_F64_OUT,
   FOUR_F64_IN_TWO_F64_OUT
-} from "./utils.js"
+} from "../js/testUtils.js"
 
-const wasmTestMap = new Map()
+const complexTestMap = new Map()
 
-wasmTestMap.set("real", {
+complexTestMap.set("real", {
   "description": "Real part",
   "function": { "name": "real", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -14,7 +14,7 @@ wasmTestMap.set("real", {
   ]
 })
 
-wasmTestMap.set("imag", {
+complexTestMap.set("imag", {
   "description": "Imaginary part",
   "function": { "name": "imag", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -22,7 +22,7 @@ wasmTestMap.set("imag", {
   ]
 })
 
-wasmTestMap.set("hypot", {
+complexTestMap.set("hypot", {
   "description": "Hypotenuse length",
   "function": { "name": "hypot", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -30,7 +30,7 @@ wasmTestMap.set("hypot", {
   ]
 })
 
-wasmTestMap.set("arg", {
+complexTestMap.set("arg", {
   "description": "Argument",
   "function": { "name": "arg", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -38,7 +38,7 @@ wasmTestMap.set("arg", {
   ]
 })
 
-wasmTestMap.set("conj", {
+complexTestMap.set("conj", {
   "description": "Conjugate",
   "function": { "name": "conj", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -46,7 +46,7 @@ wasmTestMap.set("conj", {
   ]
 })
 
-wasmTestMap.set("norm_sqr", {
+complexTestMap.set("norm_sqr", {
   "description": "Normal square",
   "function": { "name": "norm_sqr", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -54,7 +54,7 @@ wasmTestMap.set("norm_sqr", {
   ]
 })
 
-wasmTestMap.set("inv", {
+complexTestMap.set("inv", {
   "description": "Inverse",
   "function": { "name": "inv", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -62,7 +62,7 @@ wasmTestMap.set("inv", {
   ]
 })
 
-wasmTestMap.set("to_polar", {
+complexTestMap.set("to_polar", {
   "description": "Convert to polar coordinates",
   "function": { "name": "to_polar", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -70,7 +70,7 @@ wasmTestMap.set("to_polar", {
   ]
 })
 
-wasmTestMap.set("to_rect", {
+complexTestMap.set("to_rect", {
   "description": "Convert to rectangular coordinates",
   "function": { "name": "to_rect", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -78,7 +78,7 @@ wasmTestMap.set("to_rect", {
   ]
 })
 
-wasmTestMap.set("mul_by_conj", {
+complexTestMap.set("mul_by_conj", {
   "description": "Multiply a complex number by its own conjugate",
   "function": { "name": "mul_by_conj", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -86,7 +86,7 @@ wasmTestMap.set("mul_by_conj", {
   ]
 })
 
-wasmTestMap.set("mul_by_i", {
+complexTestMap.set("mul_by_i", {
   "description": "Multiply a complex number by i",
   "function": { "name": "mul_by_i", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -94,7 +94,7 @@ wasmTestMap.set("mul_by_i", {
   ]
 })
 
-wasmTestMap.set("sqr", {
+complexTestMap.set("sqr", {
   "description": "Square a complex number",
   "function": { "name": "sqr", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -102,7 +102,7 @@ wasmTestMap.set("sqr", {
   ]
 })
 
-wasmTestMap.set("taxi", {
+complexTestMap.set("taxi", {
   "description": "Taxi distance to origin",
   "function": { "name": "taxi", "arity": TWO_F64_IN_ONE_F64_OUT },
   "testList" : [
@@ -110,7 +110,7 @@ wasmTestMap.set("taxi", {
   ]
 })
 
-wasmTestMap.set("sqrt_1mz2", {
+complexTestMap.set("sqrt_1mz2", {
   "description": "Square root of one minus the complex number squared",
   "function": { "name": "sqrt_1mz2", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -118,7 +118,7 @@ wasmTestMap.set("sqrt_1mz2", {
   ]
 })
 
-wasmTestMap.set("sqrt_1pz2", {
+complexTestMap.set("sqrt_1pz2", {
   "description": "Square root of one plus the complex number squared",
   "function": { "name": "sqrt_1pz2", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -126,7 +126,29 @@ wasmTestMap.set("sqrt_1pz2", {
   ]
 })
 
-wasmTestMap.set("ln", {
+complexTestMap.set("sum_of_sqrs", {
+  "description": "Sum of squares",
+  "function": { "name": "sum_of_sqrs", "arity": TWO_F64_IN_ONE_F64_OUT },
+  "testList" : [
+    { "whenPassed": [5,2],     "shouldGet": [29] },
+    { "whenPassed": [1,1],     "shouldGet": [2] },
+    { "whenPassed": [-1,-1],   "shouldGet": [2] },
+    { "whenPassed": [0.5,0.5], "shouldGet": [0.5] }
+  ]
+})
+
+complexTestMap.set("diff_of_sqrs", {
+  "description": "Difference of squares",
+  "function": { "name": "diff_of_sqrs", "arity": TWO_F64_IN_ONE_F64_OUT },
+  "testList" : [
+    { "whenPassed": [5,2],     "shouldGet": [21] },
+    { "whenPassed": [1,1],     "shouldGet": [0] },
+    { "whenPassed": [-1,-1],   "shouldGet": [0] },
+    { "whenPassed": [0.5,0.5], "shouldGet": [0] }
+  ]
+})
+
+complexTestMap.set("ln", {
   "description": "Natural logarithm",
   "function": { "name": "ln", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -139,7 +161,7 @@ wasmTestMap.set("ln", {
   ]
 })
 
-wasmTestMap.set("sqrt", {
+complexTestMap.set("sqrt", {
   "description": "Principal value of square root",
   "function": { "name": "sqrt", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -155,7 +177,7 @@ wasmTestMap.set("sqrt", {
   ]
 })
 
-wasmTestMap.set("add", {
+complexTestMap.set("add", {
   "description": "Add two complex numbers",
   "function": { "name": "add", "arity": FOUR_F64_IN_TWO_F64_OUT },
   "testList" : [
@@ -172,7 +194,7 @@ wasmTestMap.set("add", {
   ]
 })
 
-wasmTestMap.set("sub", {
+complexTestMap.set("sub", {
   "description": "Subtract two complex numbers",
   "function": { "name": "sub", "arity": FOUR_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -189,7 +211,7 @@ wasmTestMap.set("sub", {
   ]
 })
 
-wasmTestMap.set("mul", {
+complexTestMap.set("mul", {
   "description": "Multiply two complex numbers",
   "function": { "name": "mul", "arity": FOUR_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -206,7 +228,7 @@ wasmTestMap.set("mul", {
   ]
 })
 
-wasmTestMap.set("div", {
+complexTestMap.set("div", {
   "description": "Divide two complex numbers",
   "function": { "name": "div", "arity": FOUR_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -223,7 +245,7 @@ wasmTestMap.set("div", {
   ]
 })
 
-wasmTestMap.set("sin", {
+complexTestMap.set("sin", {
   "description": "Complex sine",
   "function": { "name": "sin", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -231,7 +253,7 @@ wasmTestMap.set("sin", {
   ]
 })
 
-wasmTestMap.set("asin", {
+complexTestMap.set("asin", {
   "description": "Complex arcsine",
   "function": { "name": "asin", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -239,7 +261,7 @@ wasmTestMap.set("asin", {
   ]
 })
 
-wasmTestMap.set("sinh", {
+complexTestMap.set("sinh", {
   "description": "Complex hyperbolic sine",
   "function": { "name": "sinh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -247,7 +269,7 @@ wasmTestMap.set("sinh", {
   ]
 })
 
-wasmTestMap.set("asinh", {
+complexTestMap.set("asinh", {
   "description": "Complex hyperbolic arcsine",
   "function": { "name": "asinh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -255,7 +277,7 @@ wasmTestMap.set("asinh", {
   ]
 })
 
-wasmTestMap.set("cos", {
+complexTestMap.set("cos", {
   "description": "Complex cosine",
   "function": { "name": "cos", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -263,7 +285,7 @@ wasmTestMap.set("cos", {
   ]
 })
 
-wasmTestMap.set("acos", {
+complexTestMap.set("acos", {
   "description": "Complex arccosine",
   "function": { "name": "acos", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -271,7 +293,7 @@ wasmTestMap.set("acos", {
   ]
 })
 
-wasmTestMap.set("cosh", {
+complexTestMap.set("cosh", {
   "description": "Complex hyperbolic cosine",
   "function": { "name": "cosh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -279,7 +301,7 @@ wasmTestMap.set("cosh", {
   ]
 })
 
-wasmTestMap.set("acosh", {
+complexTestMap.set("acosh", {
   "description": "Complex hyperbolic arccosine",
   "function": { "name": "acosh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -287,7 +309,7 @@ wasmTestMap.set("acosh", {
   ]
 })
 
-wasmTestMap.set("tan", {
+complexTestMap.set("tan", {
   "description": "Complex targent",
   "function": { "name": "tan", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -295,7 +317,7 @@ wasmTestMap.set("tan", {
   ]
 })
 
-wasmTestMap.set("atan", {
+complexTestMap.set("atan", {
   "description": "Complex arctargent",
   "function": { "name": "atan", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -303,7 +325,7 @@ wasmTestMap.set("atan", {
   ]
 })
 
-wasmTestMap.set("tanh", {
+complexTestMap.set("tanh", {
   "description": "Complex hyperbolic targent",
   "function": { "name": "tanh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -311,7 +333,7 @@ wasmTestMap.set("tanh", {
   ]
 })
 
-wasmTestMap.set("atanh", {
+complexTestMap.set("atanh", {
   "description": "Complex hyperbolic arctargent",
   "function": { "name": "atanh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
@@ -321,5 +343,5 @@ wasmTestMap.set("atanh", {
 
 
 export {
-  wasmTestMap
+  complexTestMap
 }
