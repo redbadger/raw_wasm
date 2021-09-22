@@ -5,20 +5,21 @@
 <body>
 <script type="module">
 import {
-  showTestReport,
   showHostFns,
   testWasm,
 } from "./src/js/testUtils.js"
 
-import { createWasmLib } from "./src/js/wasmUtils.js"
+import { instantiateWasmModuleSequence } from "./src/js/wasmUtils.js"
 import { complexTestMap } from "./src/complex/tests.js"
 
 const TEST_MODE   = false
 const SHOW_DETAIL = false
 
 // -----------------------------------------------------------------------------
-// Since WASM has no maths library of its own, log and trigonometric functions
-// must be supplied by the host environment
+// Host functions required by the first WASM module to be instantiated.
+// This object will be extended after each WASM module instantiation so that any
+// functions exported from one module can (if necessary) be imported by some
+// subsequent module
 let hostFunctions = {
   math: {
     sin   : Math.sin,
@@ -30,18 +31,19 @@ let hostFunctions = {
   }
 }
 
+let wasmSequence = [
+  { wasmSrc : './build/complex.wasm', libName : 'cplx',   wasmObj : null },
+  { wasmSrc : './build/mandel.wasm',  libName : 'mandel', wasmObj : null }
+]
+
 // -----------------------------------------------------------------------------
-// Create an instance of the WASM module, then pass it to the test framework
 async function start() {
-  const complexMod = await createWasmLib('./build/complex.wasm', 'cplx', hostFunctions)
+  let wasmModules = await instantiateWasmModuleSequence(wasmSequence, hostFunctions)
 
-  testWasm(TEST_MODE, complexMod.wasmObj.instance, complexTestMap, SHOW_DETAIL)
+  testWasm(TEST_MODE, wasmModules.cplx.wasmObj.instance, complexTestMap, SHOW_DETAIL)
+  showHostFns(hostFunctions)
 
-  const mandelMod = await createWasmLib('./build/mandel.wasm', 'mandel', complexMod.hostFns)
-
-  // showHostFns(mandelMod)
-
-  console.log(`mandelMod.hostFns.mandel.test_add(3,0,4,0) = ${mandelMod.hostFns.mandel.test_add(3,0,4,0)}`)
+  console.log(`hostFunctions.mandel.test_add(3,0,4,0) = ${hostFunctions.mandel.test_add(3,0,4,0)}`)
 }
 
   start()

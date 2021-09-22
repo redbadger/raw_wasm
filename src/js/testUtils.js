@@ -178,13 +178,13 @@ const showTestDetail =
 
 // -----------------------------------------------------------------------------
 const showHostFns =
-  wasmMod =>
+  hostFns =>
     Object
-      .keys(wasmMod.hostFns)
+      .keys(hostFns)
       .map(libName =>
         Object
-          .keys(wasmMod.hostFns[libName])
-          .map(fn => console.log(`${libName}.${fn} : ${wasmMod.hostFns[libName][fn]}`))
+          .keys(hostFns[libName])
+          .map(fn => console.log(`${libName}.${fn} : ${hostFns[libName][fn]}`))
         )
 
 // -----------------------------------------------------------------------------

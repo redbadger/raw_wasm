@@ -5,8 +5,7 @@ This repo is an exercise in learning:
 1. How to write libraries in raw WebAssembly text
 1. How to get those libraries to interact
 
-`complex.wat` implements various arithmetic and trigonometric functions for complex numbers (all represented as 64-bit floating point numbers).
-This module is instantiated and the functions it exports are then consumed by `mandel.wasm` when this second module is instantiated.
+Two WASM modules (`complex.wasm` and `mandel.wasm`) are instantiated sequentially.  The instantiation process allows each subsequent module to (if necessary) the functions exported by the previous module instance.
 
 ## Local Execution
 
