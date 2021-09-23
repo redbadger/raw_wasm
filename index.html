@@ -11,9 +11,10 @@ import {
 
 import { instantiateWasmModuleSequence } from "./src/js/wasmUtils.js"
 import { complexTestMap } from "./src/complex/tests.js"
+import { mandelTestMap }  from "./src/mandel/tests.js"
 
-const TEST_MODE   = false
-const SHOW_DETAIL = false
+const TEST_MODE   = true
+const SHOW_DETAIL = true
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Host functions required by the first WASM module to be instantiated.
@@ -39,10 +40,8 @@ let wasmModSeq = [
 async function start() {
   let wasmModules = await instantiateWasmModuleSequence(wasmModSeq, hostFunctions)
 
-  testWasm(TEST_MODE, wasmModules.cplx.wasmObj.instance, complexTestMap, SHOW_DETAIL)
-  showHostFns(hostFunctions)
-
-  console.log(`hostFunctions.mandel.test_add(3,0,4,0) = ${hostFunctions.mandel.test_add(3,0,4,0)}`)
+  testWasm(TEST_MODE, wasmModules.mandel.wasmObj.instance, mandelTestMap, SHOW_DETAIL)
+  // showHostFns(hostFunctions)
 }
 
   start()
