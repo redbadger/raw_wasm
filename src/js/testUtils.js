@@ -1,11 +1,11 @@
 import { isArray } from './genericUtils.js'
 import { F32, F64 } from './wasmUtils.js'
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Yeah, they're equal-ish...
 const closeEnough = (tol, val, req) => req + tol >= val && req - tol <= val
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const isWithinTolerance =
   (datatype, actual, expected) =>
     datatype.label === F64.label
@@ -14,7 +14,7 @@ const isWithinTolerance =
       ? closeEnough(F32.tolerance, actual, expected)
       : actual === expected
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const checkArrayEquality =
   (outTypes, a1, a2) => {
     let comparison = {
@@ -44,7 +44,7 @@ const checkArrayEquality =
     return comparison
   }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const fnTester =
   (fnName, fnInstance, fnOutputArity, testData) => {
     let passed  = 0
@@ -77,14 +77,13 @@ const fnTester =
     }
   }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const testWasm =
   (runTests, wasmInstance, wasmTestMap, showDetail) => {
     if (runTests) {
       // Test everything exported from the WASM module
-      // At the moment, the useful information within the WASM instance (such as
-      // "what kind of thing is this export") is not available to JS as it is
-      // currently carried within the internal property [[Module]]
+      // At the moment, the useful information within the WASM instance (such as "what kind of thing is this export") is
+      // not available to JS as it is currently carried within the internal property [[Module]]
       let testReport = Object
         .keys(wasmInstance.exports)
         .reduce((acc, exp) => {
@@ -131,7 +130,7 @@ const testWasm =
     }
   }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const showTestReport =
   (testReport, showDetail) => {
     // Write test summary
@@ -152,7 +151,7 @@ const showTestReport =
     if (showDetail) showTestDetail(testReport)
   }
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const showTestDetail =
   testReport =>
     testReport
@@ -166,7 +165,7 @@ const showTestDetail =
           )
       })
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 const showHostFns =
   hostFns =>
     Object
@@ -175,11 +174,11 @@ const showHostFns =
         Object
           .keys(hostFns[libName])
           .map(fn => console.log(`${libName}.${fn} : ${hostFns[libName][fn]}`))
-        )
+      )
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Public API
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 export {
   testWasm,
   showTestReport,

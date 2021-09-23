@@ -15,11 +15,10 @@ import { complexTestMap } from "./src/complex/tests.js"
 const TEST_MODE   = false
 const SHOW_DETAIL = false
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Host functions required by the first WASM module to be instantiated.
-// This object will be extended after each WASM module instantiation so that any
-// functions exported from one module can (if necessary) be imported by some
-// subsequent module
+// This object will be extended after each WASM module instantiation so that any functions exported from one module can
+// (if necessary) be imported by some subsequent module
 let hostFunctions = {
   math: {
     sin   : Math.sin,
@@ -31,14 +30,14 @@ let hostFunctions = {
   }
 }
 
-let wasmSequence = [
+let wasmModSeq = [
   { wasmSrc : './build/complex.wasm', libName : 'cplx',   wasmObj : null },
   { wasmSrc : './build/mandel.wasm',  libName : 'mandel', wasmObj : null }
 ]
 
-// -----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 async function start() {
-  let wasmModules = await instantiateWasmModuleSequence(wasmSequence, hostFunctions)
+  let wasmModules = await instantiateWasmModuleSequence(wasmModSeq, hostFunctions)
 
   testWasm(TEST_MODE, wasmModules.cplx.wasmObj.instance, complexTestMap, SHOW_DETAIL)
   showHostFns(hostFunctions)
