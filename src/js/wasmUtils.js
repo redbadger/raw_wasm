@@ -1,15 +1,41 @@
 import { setProperty } from './genericUtils.js'
 
-// These tolerance values are somewhat arbitrary...
+// These comparison tolerance values are somewhat arbitrary...
 const F64 = { "label": "f64", "tolerance" : 0.0000000000000005 }
 const F32 = { "label": "f32", "tolerance" : 0.0000000000000005 }
+const I64 = { "label": "i64", "tolerance" : 0 }
 const I32 = { "label": "i32", "tolerance" : 0 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-const TWO_F64_IN_ONE_F64_OUT  = { "input" : [F64, F64],           "output" : [F64] }
-const TWO_F64_IN_ONE_I32_OUT  = { "input" : [F64, F64],           "output" : [I32] }
-const TWO_F64_IN_TWO_F64_OUT  = { "input" : [F64, F64],           "output" : [F64, F64] }
-const FOUR_F64_IN_TWO_F64_OUT = { "input" : [F64, F64, F64, F64], "output" : [F64, F64] }
+const TWO_F64_IN_ONE_F64_OUT  = {
+  "input"  : [F64, F64],
+  "output" : [F64]
+}
+
+const TWO_F64_IN_ONE_I32_OUT  = {
+  "input"  : [F64, F64],
+  "output" : [I32]
+}
+
+const TWO_F64_ONE_I32_IN_ONE_I32_OUT  = {
+  "input"  : [F64, F64, I32],
+  "output" : [I32]
+}
+
+const TWO_F64_IN_TWO_F64_OUT  = {
+  "input"  : [F64, F64],
+  "output" : [F64, F64]
+}
+
+const FOUR_F64_IN_TWO_F64_OUT = {
+  "input"  : [F64, F64, F64, F64],
+  "output" : [F64, F64]
+}
+
+const FOUR_F64_ONE_I32_IN_ONE_I32_OUT = {
+  "input"  : [F64, F64, F64, F64, I32],
+  "output" : [I32]
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Unload all the exports of a WASM instance and package them into the `libName` property of the `hostFns` object
@@ -48,6 +74,8 @@ export {
   F32,
   TWO_F64_IN_ONE_F64_OUT,
   TWO_F64_IN_ONE_I32_OUT,
+  TWO_F64_ONE_I32_IN_ONE_I32_OUT,
   TWO_F64_IN_TWO_F64_OUT,
   FOUR_F64_IN_TWO_F64_OUT,
+  FOUR_F64_ONE_I32_IN_ONE_I32_OUT,
 }

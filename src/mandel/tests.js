@@ -1,5 +1,7 @@
 import {
   TWO_F64_IN_ONE_I32_OUT,
+  TWO_F64_ONE_I32_IN_ONE_I32_OUT,
+  FOUR_F64_ONE_I32_IN_ONE_I32_OUT
 } from "../js/wasmUtils.js"
 
 const mandelTestMap = new Map()
@@ -52,6 +54,32 @@ mandelTestMap.set("mandel_early_bailout", {
     { "whenPassed": [-0.75,0], "shouldGet": [1] },
     { "whenPassed": [0,1], "shouldGet": [0] },
     { "whenPassed": [0,-1], "shouldGet": [0] },
+  ]
+})
+
+mandelTestMap.set("escape_time_mj", {
+  "description": "Escape time algorithm for calculating both the Mandelbrot set and Julia sets",
+  "function": { "name": "escape_time_mj", "arity": FOUR_F64_ONE_I32_IN_ONE_I32_OUT },
+  "testList" : [
+    { "whenPassed": [0,0,0,0,100], "shouldGet": [100] },
+    { "whenPassed": [-2,0,0,0,100], "shouldGet": [100] },
+    { "whenPassed": [0.675,0,0,0,100], "shouldGet": [4] },
+    { "whenPassed": [1,0,0,0,100], "shouldGet": [3] },
+    { "whenPassed": [2,0,0,0,100], "shouldGet": [2] },
+    { "whenPassed": [2.00001,0,0,0,100], "shouldGet": [1] },
+  ]
+})
+
+mandelTestMap.set("mandel_iter", {
+  "description": "Return the iteration count of one pixel on the Mandelbrot set",
+  "function": { "name": "mandel_iter", "arity": TWO_F64_ONE_I32_IN_ONE_I32_OUT },
+  "testList" : [
+    { "whenPassed": [0,0,100], "shouldGet": [100] },
+    { "whenPassed": [-2,0,100], "shouldGet": [100] },
+    { "whenPassed": [0.675,0,100], "shouldGet": [4] },
+    { "whenPassed": [1,0,100], "shouldGet": [3] },
+    { "whenPassed": [2,0,100], "shouldGet": [2] },
+    { "whenPassed": [2.00001,0,100], "shouldGet": [1] },
   ]
 })
 
