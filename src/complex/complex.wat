@@ -5,7 +5,7 @@
   (import "math" "cos"   (func $host_cos   (param f64)     (result f64)))
   (import "math" "sinh"  (func $host_sinh  (param f64)     (result f64)))
   (import "math" "cosh"  (func $host_cosh  (param f64)     (result f64)))
-  (import "math" "ln"    (func $host_ln    (param f64)     (result f64)))
+  (import "math" "log"   (func $host_log   (param f64)     (result f64)))
   (import "math" "atan2" (func $host_atan2 (param f64 f64) (result f64)))
 
   (global $PI       f64 (f64.const  3.141592653589793))
@@ -179,7 +179,7 @@
           (then unreachable)
           (else
             ;; Real part is always ln(|a|)
-            (local.set $real (call $host_ln (f64.abs (local.get $a))))
+            (local.set $real (call $host_log (f64.abs (local.get $a))))
 
             ;; What's the sign of the real part?
             (if (f64.lt (local.get $a) (f64.const 0))
@@ -201,7 +201,7 @@
         local.set $imag
         local.set $real
 
-        (local.set $real (call $host_ln (local.get $real)))
+        (local.set $real (call $host_log (local.get $real)))
       )
     )
 

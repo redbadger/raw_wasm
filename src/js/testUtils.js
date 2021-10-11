@@ -1,4 +1,3 @@
-import { isArray } from './genericUtils.js'
 import { F32, F64 } from './wasmUtils.js'
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -23,7 +22,7 @@ const checkArrayEquality =
     }
 
     // Are the arrays comparable?
-    if (isArray(a1) && isArray(a2) && a1.length === a2.length) {
+    if (Array.isArray(a1) && Array.isArray(a2) && a1.length === a2.length) {
       // Yup, so determine equality of each array element
       comparison.elementEquality = a1.reduce(
         (acc, val, idx) => {

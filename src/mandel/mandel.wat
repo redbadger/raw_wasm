@@ -1,6 +1,6 @@
 (module
   ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Complex functions
+  ;; Import complex functions
   (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
   (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
 

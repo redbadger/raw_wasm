@@ -1,10 +1,12 @@
-import { setProperty } from './genericUtils.js'
-
 // These comparison tolerance values are somewhat arbitrary...
 const F64 = { "label": "f64", "tolerance" : 0.0000000000000005 }
 const F32 = { "label": "f32", "tolerance" : 0.0000000000000005 }
 const I64 = { "label": "i64", "tolerance" : 0 }
 const I32 = { "label": "i32", "tolerance" : 0 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+const setProperty = (obj, propName, propVal) => (_ => obj)(obj[propName] = propVal)
+const mergeObjects = (sourceObj, targetObj) => ({ ...targetObj, ...sourceObj })
 
 // ---------------------------------------------------------------------------------------------------------------------
 const TWO_F64_IN_ONE_F64_OUT  = {
@@ -38,30 +40,42 @@ const FOUR_F64_ONE_I32_IN_ONE_I32_OUT = {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Unload all the exports of a WASM instance and package them into the `libName` property of the `hostFns` object
-//
-// The `hostFns` object uses a two-level namespace where the top level identifies the library name and the second level
-// identifies the function within that library.
+// Unload all the exports of a WASM instance and add them to the possibly already existing `libName` property in the
+// `hostFns` object
 const packageWasmExports =
-  (wasmObj, libName, hostFns) =>
+  (wasmInstance, libName, hostFns) =>
     Object
-    .keys(wasmObj.instance.exports)
-    .reduce(
-      (acc, exp) => (_ => acc)(acc[libName][exp] = wasmObj.instance.exports[exp]),
-      setProperty(hostFns, libName, {})
-    )
+      .keys(wasmInstance.exports)
+      .reduce(
+        (acc, exp) => (_ => acc)(acc[libName][exp] = wasmInstance.exports[exp]),
+        setProperty(hostFns, libName, !!hostFns[libName] ? hostFns[libName] : {})
+      )
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Instantiate a sequence of WASM modules
-async function instantiateWasmModuleSequence(wasmSequence, hostFunctions) {
-  return (await Promise.all(
-    wasmSequence
-      .map(async (wasmSeq) => {
-        wasmSeq.wasmObj = await WebAssembly.instantiateStreaming(fetch(wasmSeq.wasmSrc), hostFunctions)
-        hostFunctions = packageWasmExports(wasmSeq.wasmObj, wasmSeq.libName, hostFunctions)
-        return wasmSeq
-      })
-  )).reduce((acc, wasmMod) => setProperty(acc, wasmMod.libName, wasmMod), {})
+// Instantiate a sequence of WASM modules that potentially have import dependencies on some predecessor in the list
+const instantiateWasmModuleSequence = async moduleSequence => {
+  let idx = 0
+  let wasmModAccumulator = {}
+
+  wasmModAccumulator.hostFunctions = moduleSequence[0].hostFunctions
+
+  for (idx=0; idx < moduleSequence.length; idx++) {
+    const thisMod = moduleSequence[idx]
+
+    console.log(`Instantiating ${thisMod.wasmBin}`)
+
+    let wasmObj = await WebAssembly.instantiateStreaming(fetch(thisMod.wasmBin), wasmModAccumulator.hostFunctions)
+
+    wasmModAccumulator.hostFunctions = packageWasmExports(
+      wasmObj.instance,
+      thisMod.addWasmExportsToLibName,
+      wasmModAccumulator.hostFunctions
+    )
+
+    wasmModAccumulator[thisMod.addWasmExportsToLibName] = wasmObj
+  }
+
+  return wasmModAccumulator
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -273,7 +273,7 @@ complexTestMap.set("asinh", {
   "description": "Complex hyperbolic arcsine",
   "function": { "name": "asinh", "arity": TWO_F64_IN_TWO_F64_OUT },
   "testList": [
-    { "whenPassed": [-30.879431343588244,67.47891523845588], "shouldGet": [-5.000000000001505,1.141592653589953] }
+    { "whenPassed": [-30.879431343588244,67.47891523845588], "shouldGet": [-5.000000000001725,1.1415926535904324] }
   ]
 })
 

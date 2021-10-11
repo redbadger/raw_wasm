@@ -1,8 +1,7 @@
 <!DOCTYPE html>
+<html>
 <head>
   <meta charset="UTF-8">
-</head>
-<body>
 <script type="module">
 import {
   showHostFns,
@@ -17,33 +16,20 @@ const TEST_MODE   = true
 const SHOW_DETAIL = true
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Host functions required by the first WASM module to be instantiated.
-// This object will be extended after each WASM module instantiation so that any functions exported from one module can
-// (if necessary) be imported by some subsequent module
-let hostFunctions = {
-  math: {
-    sin   : Math.sin,
-    cos   : Math.cos,
-    sinh  : Math.sinh,
-    cosh  : Math.cosh,
-    ln    : Math.log,
-    atan2 : Math.atan2
-  }
-}
-
-let wasmModSeq = [
-  { wasmSrc : './build/complex.wasm', libName : 'cplx',   wasmObj : null },
-  { wasmSrc : './build/mandel.wasm',  libName : 'mandel', wasmObj : null }
+// These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
+// dependencies on earlier modules
+const instantiationSequence = [
+  { wasmBin : './build/complex.wasm', addWasmExportsToLibName : 'cplx', hostFunctions : { math : Math } },
+  { wasmBin : './build/mandel.wasm',  addWasmExportsToLibName : 'mandel' }
 ]
 
-// ---------------------------------------------------------------------------------------------------------------------
-async function start() {
-  let wasmModules = await instantiateWasmModuleSequence(wasmModSeq, hostFunctions)
-
-  testWasm(TEST_MODE, wasmModules.mandel.wasmObj.instance, mandelTestMap, SHOW_DETAIL)
-  // showHostFns(hostFunctions)
-}
-
-  start()
+instantiateWasmModuleSequence(instantiationSequence)
+  .then(wasmModules => {
+    testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
+    testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
+    showHostFns(wasmModules.hostFunctions)
+  })
 </script>
-</body>
+</head>
+<body></body>
+</html>
