@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 <script type="module">
 import {
   showHostFns,
   testWasm,
 } from "./src/js/testUtils.js"
 
-import { instantiateWasmModuleSequence } from "./src/js/wasmUtils.js"
+import {
+  WasmModule,
+  instantiateWasmModuleSequence
+} from "./src/js/wasmUtils.js"
+
 import { complexTestMap } from "./src/complex/tests.js"
 import { mandelTestMap }  from "./src/mandel/tests.js"
 
@@ -19,11 +23,11 @@ const SHOW_DETAIL = true
 // These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
 // dependencies on earlier modules
 const instantiationSequence = [
-  { wasmBin : './build/complex.wasm', addWasmExportsToLibName : 'cplx', hostFunctions : { math : Math } },
-  { wasmBin : './build/mandel.wasm',  addWasmExportsToLibName : 'mandel' }
+  new WasmModule('./build/complex.wasm', 'cplx'),
+  new WasmModule('./build/mandel.wasm',  'mandel')
 ]
 
-instantiateWasmModuleSequence(instantiationSequence)
+instantiateWasmModuleSequence(instantiationSequence, { math : Math })
   .then(wasmModules => {
     testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
     testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
