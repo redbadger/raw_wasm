@@ -1,82 +1,142 @@
 import { F32, F64 } from './wasmUtils.js'
 
-/***********************************************************************************************************************
- * Test whether the difference between two values is smaller than a given tolerance
- *
- * @param {number} tol - Tolerance value
- * @param {number} val - The value received from the test output
- * @param {number} req - The expected test output value
- *
- * @returns {boolean}
- */
-const closeEnough = (tol, val, req) => req + tol >= val && req - tol <= val
+const hexChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-/***********************************************************************************************************************
- * Test whether the receievd value and the expected value are within the acceptable tolerance for their datatype
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Class for performing one or more tests against an exported WASM function
  *
- * @param {WasmDatatype} datatype - WASM interface datatype
- * @param {number}       actual   - Actual test output value
- * @param {number}       expected - Expected test output value
- *
- * @returns {boolean}
+ * @class
  */
-const isWithinTolerance =
-  (datatype, actual, expected) =>
-    datatype.label === F64.label
-    ? closeEnough(F64.tolerance, actual, expected)
-    : datatype.label === F32.label
-      ? closeEnough(F32.tolerance, actual, expected)
-      : actual === expected
+class WasmFunctionTestValues {
+  constructor(whenPassed, shouldGet, useHexFormat) {
+    this.whenPassed = whenPassed
+    this.shouldGet = shouldGet
+    this.useHexFormat = !!useHexFormat
+  }
+}
 
-/***********************************************************************************************************************
- * Check whether two arrays are equal. This test first requires that:
- * a) Both arguments are arrays
- * b) Both array arguments have identical length
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Class for performing one or more tests against an exported WASM function
  *
- * If this condition is satisfied, then a pointwise comparison of the corresponding array elements is performed
+ * @class
+ */
+class WasmFunctionTest {
+  constructor(fnName, fnArity, fnDescription) {
+    this.function = {}
+    this.testList = []
+    this.function.name = fnName
+    this.function.arity = fnArity
+    this.description = fnDescription
+  }
+
+  setTestList = testList => this.testList = testList
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Test result value comparison class
  *
+ * @class
+ *
+ * { "equal" : true,  "withinTolerance" : true }  = Strict equality
+ * { "equal" : false, "withinTolerance" : true }  = Not strictly equal, but within tolerance
+ * { "equal" : false, "withinTolerance" : false } = Not equal and outside tolerance
+ */
+class TestResultComparison {
+  constructor(equal, withinTolerance) {
+    this.equal = equal
+    this.withinTolerance = withinTolerance
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Class that compares whether two arrays are equal.
+ *
+ * @class
+ * @constructor As long as the first two arguments are arrays of equal length, a pointwise comparison of the
+ *              corresponding array elements is performed.  If two floating point values are compared, then these can be
+ *              considered equal if they fall within the specified tolerance
+ *
+ * @param {number[]}       array1
+ * @param {number[]}       array2
  * @param {WasmDatatype[]} outTypes - An array holding the datatype of each element in the comparison arrays
- * @param {number[]}       a1       - Array 1
- * @param {number[]}       a2       - Array 2
  *
  * @returns {Object} A comparison object containing first, a boolean to indicate whether or not the two arrays are even
- *                   comparable, and second, an array of objects where each object holds a pair of booleans.
+ *                   comparable, and second, an array of objects where each object holds a {TestResultComparison} object
  *                   Each pair of booleans correspond to the comparison of the array elements at a given index.
- *                   The following return values are possible:
- *                   Strict equality                          = { "equal" : true,  "withinTolerance" : true }
- *                   Not strictly equal, but within tolerance = { "equal" : false, "withinTolerance" : true }
- *                   Not strictly equal and outside tolerance = { "equal" : false, "withinTolerance" : false }
  */
-const checkArrayEquality =
-  (outTypes, a1, a2) => {
-    let comparison = {
-      "comparable" : true,
-      "elementEquality" : []
-    }
+class ResultsComparison {
+  #closeEnough = (tol, val, req) => req + tol >= val && req - tol <= val
+
+  #isWithinTolerance = (actual, expected, datatype) =>
+    datatype.label === F64.label
+      ? this.#closeEnough(F64.tolerance, actual, expected)
+      : datatype.label === F32.label
+        ? this.#closeEnough(F32.tolerance, actual, expected)
+        : actual === expected
+
+  constructor(array1, array2, outputTypes) {
+    this.comparable = true
+    this.elementEquality = []
+    this.a1 = array1
+    this.a2 = array2
+    this.outputTypes = outputTypes
 
     // Are the arrays comparable?
-    if (Array.isArray(a1) && Array.isArray(a2) && a1.length === a2.length) {
+    if (Array.isArray(this.a1) && Array.isArray(this.a2) &&
+        this.a1.length === this.a2.length) {
       // Yup, so determine equality of each array element
-      comparison.elementEquality = a1.reduce(
-        (acc, val, idx) => {
+      this.elementEquality = this.a1.reduce(
+        (acc, a1Val, idx) => {
           acc.push(
-            val === a2[idx]
-            ? { "equal" : true, "withinTolerance" : true }
-            : isWithinTolerance(outTypes[idx], val, a2[idx])
-              ? { "equal" : false, "withinTolerance" : true }
-              : { "equal" : false, "withinTolerance" : false }
+            // Are these values stricly equal?
+            a1Val === this.a2[idx]
+            // Yup, then "withinTolerance" is not relevant and should be switched off
+            ? new TestResultComparison(true, false)
+            // Nope, so test whether values are within floating point tolerance
+            : this.#isWithinTolerance(a1Val, this.a2[idx], outputTypes[idx])
+              ? new TestResultComparison(false, true)
+              : new TestResultComparison(false, false)
           )
 
           return acc
         },
         [])
-    } else
-      comparison.comparable = false
-
-    return comparison
+    } else {
+      // Nope - either they're not both arrays or they're arrays of differing lengths
+      this.comparable = false
+    }
   }
+}
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Use a 4-byte ArrayBuffer as the foundation on which to overlay two masks.
+ * This allows us to write 4 bytes as a single, 32-bit integer (`mask32`), then read those bytes back again as an array
+ * of 4, 8-bit bytes (using `mask8`)
+ *
+ * @param {number} i32 - A 32-bit integer to be represented as a "0x" prefixed hex string
+ * @returns {String}
+ */
+const i32ToHex = i32 =>
+  (byteArray =>
+    ((mask32, mask8) => {
+      mask32[0] = i32
+
+      // reduceRight is needed to preserve little-endian byte order!
+      return mask8.reduceRight(
+        (hexStr, n) => `${hexStr}${hexChars[n >> 4]}${hexChars[n & 0x0F]}`,
+        "0x")
+    })(new Uint32Array(byteArray), new Uint8ClampedArray(byteArray))
+  )(new ArrayBuffer(4))
+
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Write test result to console
+ *
+ * @param {String} o     - Object containing test results
+ * @param {String} o.msg - Description of test result
+ */
+const writeTestResultToConsole = o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
+
+/* ---------------------------------------------------------------------------------------------------------------------
  * Perform a single test of a function exported from a WASM module
  *
  * @param {string} fnName        - The name of the function being tested
@@ -94,9 +154,17 @@ const fnTester =
     let outcome = ""
     let got     = fnInstance(...testData.whenPassed)   // Test the function
 
-    if (fnOutputArity.length === 1) got = [got]
+    if (fnOutputArity.length === 1) {
+      // If output arity is a single i32, then display the value as a hex string
+      if (fnOutputArity[0].label == 'i32' && testData.useHexFormat) {
+        got = [i32ToHex(got)]
+        testData.shouldGet[0] = i32ToHex(testData.shouldGet[0])
+      } else {
+        got = [got]
+      }
+    }
 
-    let comparison = checkArrayEquality(fnOutputArity, got, testData.shouldGet)
+    let comparison = new ResultsComparison(got, testData.shouldGet, fnOutputArity)
 
     if (!comparison.comparable) {
       outcome = `FAIL: Arrays of differing length or type are not comparable`
@@ -119,7 +187,7 @@ const fnTester =
     }
   }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Test all functions exported by a WASM module
  *
  * @param {boolean} runTests     - If set to false, all tests are bypassed
@@ -179,7 +247,7 @@ const testWasm =
     }
   }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Write a WASM module test report to the browser console
  *
  * @param {Object}  testReport - An object containing the results of a WASM module's test run
@@ -204,7 +272,7 @@ const showTestReport =
     if (showDetail) showTestDetail(testReport)
   }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Write a detailed WASM module test report to the browser console
  *
  * @param {Object}  An object containing the results of a WASM module's test run
@@ -217,12 +285,10 @@ const showTestReport =
         console.log(test.description)
 
         if (test.outcomes.length > 0)
-          test.outcomes.map(
-            o => console[o.msg.slice(0,4) === "PASS" ? "log" : "error"](`  ${o.msg}`)
-          )
+          test.outcomes.map(writeTestResultToConsole)
       })
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Utility function to display the contents of the "host functions" object
  *
  * @params {Object} hostFns - The object containing all the host functions
@@ -237,11 +303,14 @@ const showHostFns =
           .map(fn => console.log(`${libName}.${fn} : ${hostFns[libName][fn]}`))
       )
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Public API
+*/
 export {
   testWasm,
   showTestReport,
   showHostFns,
+
+  WasmFunctionTest,
+  WasmFunctionTestValues,
 }

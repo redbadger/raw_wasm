@@ -1,4 +1,4 @@
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * WASM interface data types
  *
  * @constructor
@@ -10,14 +10,14 @@ function WasmDatatype(label, tolerance) {
   this.tolerance = tolerance || 0
 }
 
-// Due to floating point inaccuracies, comparing test results against expected values requires the use of a tolerance
-// values (these are somewhat arbitrary...)
+// Due to floating point inaccuracies, comparing test results against expected values requires the use of (somewhat
+// arbitrary) tolerance value
 const F64 = new WasmDatatype("f64", 0.0000000000000005)
 const F32 = new WasmDatatype("f32", 0.0000000000000005)
 const I32 = new WasmDatatype("i32")
 
-/***********************************************************************************************************************
- * Arbitrarily assign property `propName` of object `obj` to have the value `propVal`
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Arbitrarily set property `propName` of object `obj` to have the value `propVal`
  * If `propName` already exists, its value is overwritten
  *
  * @param   {Object}  obj      - The object to be updated
@@ -28,7 +28,7 @@ const I32 = new WasmDatatype("i32")
  */
 const setProperty = (obj, propName, propVal) => (_ => obj)(obj[propName] = propVal)
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * WASM function interface type
  *
  * @constructor
@@ -40,7 +40,7 @@ function WasmInterfaceType(inputTypes, outputTypes) {
   this.output = outputTypes
 }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Commonly used WASM function interface types
  */
 const TWO_F64_IN_ONE_F64_OUT          = new WasmInterfaceType([F64, F64], [F64])
@@ -49,8 +49,9 @@ const TWO_F64_ONE_I32_IN_ONE_I32_OUT  = new WasmInterfaceType([F64, F64, I32], [
 const TWO_F64_IN_TWO_F64_OUT          = new WasmInterfaceType([F64, F64], [F64, F64])
 const FOUR_F64_IN_TWO_F64_OUT         = new WasmInterfaceType([F64, F64, F64, F64], [F64, F64])
 const FOUR_F64_ONE_I32_IN_ONE_I32_OUT = new WasmInterfaceType([F64, F64, F64, F64, I32], [I32])
+const FOUR_I32_IN_ONE_I32_OUT         = new WasmInterfaceType([I32, I32, I32, I32], [I32])
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Return an object containing the pathname to a compiled WASM module and the name of the library into which its
  * exported functions should be added
  *
@@ -63,7 +64,7 @@ function WasmModule(pathToWasmBin, exportToLib) {
   this.exportToLib = exportToLib
 }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Add all the exports of a WASM instance to the possibly already existing `libName` property of object `hostFns`
  *
  * @param   {Object} wasmInstance - An instantiated WASM module that exports one or more functions
@@ -81,7 +82,7 @@ const packageWasmExports =
         setProperty(hostFns, libName, !!hostFns[libName] ? hostFns[libName] : {})
       )
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Instantiate a list of WASM modules that potentially have import dependencies on some previously instantiated module
  *
  * @param {WasmModule[]} moduleSequence - A list of WASM modules in the order in which they need to be instantiated
@@ -91,12 +92,11 @@ const packageWasmExports =
  *                   instantiated WASM modules
  */
 const instantiateWasmModuleSequence = async (moduleSequence, initialHostFns) => {
-  let idx = 0
   let wasmModAccumulator = {}
 
   wasmModAccumulator.hostFunctions = initialHostFns
 
-  for (idx=0; idx < moduleSequence.length; idx++) {
+  for (let idx=0; idx < moduleSequence.length; idx++) {
     const thisMod = moduleSequence[idx]
 
     console.log(`Instantiating ${thisMod.pathToWasmBin}`)
@@ -115,7 +115,7 @@ const instantiateWasmModuleSequence = async (moduleSequence, initialHostFns) => 
   return wasmModAccumulator
 }
 
-/***********************************************************************************************************************
+/* ---------------------------------------------------------------------------------------------------------------------
  * Public API
  */
 export {
@@ -124,10 +124,12 @@ export {
 
   F64,
   F32,
+  I32,
   TWO_F64_IN_ONE_F64_OUT,
   TWO_F64_IN_ONE_I32_OUT,
   TWO_F64_ONE_I32_IN_ONE_I32_OUT,
   TWO_F64_IN_TWO_F64_OUT,
   FOUR_F64_IN_TWO_F64_OUT,
   FOUR_F64_ONE_I32_IN_ONE_I32_OUT,
+  FOUR_I32_IN_ONE_I32_OUT,
 }

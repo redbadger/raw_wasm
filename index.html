@@ -2,6 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
+</head>
+<body>
+  <section id="plotArea">
+    <canvas id="mandelImage" width="800" height="450"></canvas>
+  </section>
 <script type="module">
 import {
   showHostFns,
@@ -15,6 +20,7 @@ import {
 
 import { complexTestMap } from "./src/complex/tests.js"
 import { mandelTestMap }  from "./src/mandel/tests.js"
+import { colourTestMap }  from "./src/render/tests.js"
 
 const TEST_MODE   = true
 const SHOW_DETAIL = true
@@ -24,16 +30,19 @@ const SHOW_DETAIL = true
 // dependencies on earlier modules
 const instantiationSequence = [
   new WasmModule('./build/complex.wasm', 'cplx'),
-  new WasmModule('./build/mandel.wasm',  'mandel')
+  new WasmModule('./build/mandel.wasm',  'mandel'),
+  new WasmModule('./build/canvas.wasm',  'canvas'),
 ]
 
 instantiateWasmModuleSequence(instantiationSequence, { math : Math })
   .then(wasmModules => {
     testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
     testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
-    showHostFns(wasmModules.hostFunctions)
+    testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
+    // showHostFns(wasmModules.hostFunctions)
+
+    return wasmModules
   })
 </script>
-</head>
-<body></body>
+</body>
 </html>

@@ -4,6 +4,11 @@
   (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
   (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
 
+  ;; -------------------------------------------------------------------------------------------------------------------
+  ;; Import complex functions
+  ;; (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
+  ;; (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
+
   (global $TRUE  i32 (i32.const 1))
   (global $FALSE i32 (i32.const 0))
 
@@ -63,7 +68,7 @@
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Can we bail out from the Mandelbrot escape time algorithm early?
+  ;; Can we bail out early from the Mandelbrot escape time algorithm?
   (func $mandel_early_bailout
         (export "mandel_early_bailout")
         (param $x f64)
@@ -84,7 +89,7 @@
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Escape time algorithm for calculating both the Mandelbrot set and Julia sets
+  ;; Escape time algorithm for calculating either the Mandelbrot or Julia sets
   (func $escape_time_mj
         (export "escape_time_mj")
         (param $x         f64)
@@ -147,4 +152,25 @@
     (local.get $return_val)
   )
 
+  ;; -------------------------------------------------------------------------------------------------------------------
+  ;; Draw the Mandelbrot set
+  (func $draw_mandelbrot
+        (export "draw_mandelbrot")
+        (param $x f64)
+        (param $y f64)
+        (param $max_iters i32)
+        (result i32)
+
+    (local $return_val i32)
+
+    (if (call $mandel_early_bailout (local.get $x) (local.get $y))
+      (then (local.set $return_val (local.get $max_iters)))
+      (else (local.set $return_val
+              (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
+            )
+      )
+    )
+
+    (local.get $return_val)
+  )
 )
