@@ -1,6 +1,35 @@
 import { F32, F64 } from './wasmUtils.js'
 
-const hexChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+/* ---------------------------------------------------------------------------------------------------------------------
+ * Class for formatting an i32 in various ways
+ */
+class FormatI32 {
+  static #hexChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+
+  /* -------------------------------------------------------------------------------------------------------------------
+   * Format an i32 as a hex string.
+   * Use a 4-byte ArrayBuffer as the foundation on which to overlay two masks. This allows a single, 32-bit integer to
+   * be written using `mask32`, then using `mask8`, read back again as an array of 4 unsigned bytes
+   *
+   * @param {number} i32 - A 32-bit integer to be represented as a "0x" prefixed hex string
+   * @returns {String}
+   */
+  static asHexStr = i32 =>
+    (byteArray =>
+      ((mask32, mask8) => {
+        mask32[0] = i32
+
+        // reduceRight is needed to preserve little-endian byte order!
+        return mask8.reduceRight(
+          (hexStr, n) => `${hexStr}${this.#hexChars[n >> 4]}${this.#hexChars[n & 0x0F]}`,
+          "0x")
+      })(new Uint32Array(byteArray), new Uint8ClampedArray(byteArray))
+    )(new ArrayBuffer(4))
+
+  static asBoolean = i32 => i32 === 0 ? "false" : "true"
+  static none = i32 => i32
+}
+
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Class for performing one or more tests against an exported WASM function
@@ -8,10 +37,17 @@ const hexChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C
  * @class
  */
 class WasmFunctionTestValues {
-  constructor(whenPassed, shouldGet, useHexFormat) {
+  #setFormatFn = fmtStr =>
+    fmtStr === "boolean"
+    ? FormatI32.asBoolean
+    : fmtStr === "hex"
+      ? FormatI32.asHexStr
+      : FormatI32.none
+
+  constructor(whenPassed, shouldGet, formatter) {
     this.whenPassed = whenPassed
     this.shouldGet = shouldGet
-    this.useHexFormat = !!useHexFormat
+    this.formatter = this.#setFormatFn(formatter)
   }
 }
 
@@ -37,7 +73,7 @@ class WasmFunctionTest {
  *
  * @class
  *
- * { "equal" : true,  "withinTolerance" : true }  = Strict equality
+ * { "equal" : true,  "withinTolerance" : false } = Strict equality
  * { "equal" : false, "withinTolerance" : true }  = Not strictly equal, but within tolerance
  * { "equal" : false, "withinTolerance" : false } = Not equal and outside tolerance
  */
@@ -109,26 +145,6 @@ class ResultsComparison {
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
- * Use a 4-byte ArrayBuffer as the foundation on which to overlay two masks.
- * This allows us to write 4 bytes as a single, 32-bit integer (`mask32`), then read those bytes back again as an array
- * of 4, 8-bit bytes (using `mask8`)
- *
- * @param {number} i32 - A 32-bit integer to be represented as a "0x" prefixed hex string
- * @returns {String}
- */
-const i32ToHex = i32 =>
-  (byteArray =>
-    ((mask32, mask8) => {
-      mask32[0] = i32
-
-      // reduceRight is needed to preserve little-endian byte order!
-      return mask8.reduceRight(
-        (hexStr, n) => `${hexStr}${hexChars[n >> 4]}${hexChars[n & 0x0F]}`,
-        "0x")
-    })(new Uint32Array(byteArray), new Uint8ClampedArray(byteArray))
-  )(new ArrayBuffer(4))
-
-/* ---------------------------------------------------------------------------------------------------------------------
  * Write test result to console
  *
  * @param {String} o     - Object containing test results
@@ -155,10 +171,10 @@ const fnTester =
     let got     = fnInstance(...testData.whenPassed)   // Test the function
 
     if (fnOutputArity.length === 1) {
-      // If output arity is a single i32, then display the value as a hex string
-      if (fnOutputArity[0].label == 'i32' && testData.useHexFormat) {
-        got = [i32ToHex(got)]
-        testData.shouldGet[0] = i32ToHex(testData.shouldGet[0])
+      // If the output arity is a single i32, then pass the actual and expected results to the formatter function
+      if (fnOutputArity[0].label === 'i32') {
+        got = [testData.formatter(got)]
+        testData.shouldGet[0] = testData.formatter(testData.shouldGet[0])
       } else {
         got = [got]
       }

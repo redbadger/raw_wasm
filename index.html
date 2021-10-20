@@ -30,8 +30,8 @@ const SHOW_DETAIL = true
 // dependencies on earlier modules
 const instantiationSequence = [
   new WasmModule('./build/complex.wasm', 'cplx'),
-  new WasmModule('./build/mandel.wasm',  'mandel'),
   new WasmModule('./build/canvas.wasm',  'canvas'),
+  new WasmModule('./build/mandel.wasm',  'mandel'),
 ]
 
 instantiateWasmModuleSequence(instantiationSequence, { math : Math })
