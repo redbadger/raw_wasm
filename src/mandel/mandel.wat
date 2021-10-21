@@ -4,10 +4,7 @@
   (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
   (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
 
-  ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Import complex functions
-  ;; (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
-  ;; (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
+  (global $MAX_ITERS (import "plot" "max_iters") i32)
 
   (global $TRUE  i32 (i32.const 1))
   (global $FALSE i32 (i32.const 0))
@@ -92,15 +89,13 @@
   ;; Escape time algorithm for calculating either the Mandelbrot or Julia sets
   (func $escape_time_mj
         (export "escape_time_mj")
-        (param $x         f64)
-        (param $y         f64)
-        (param $start_x   f64)
-        (param $start_y   f64)
-        (param $max_iters i32)
+        (param $x       f64)
+        (param $y       f64)
+        (param $start_x f64)
+        (param $start_y f64)
         (result i32)
 
     (local $iter_count i32)
-
     (local $new_x f64)
     (local $new_y f64)
 
@@ -112,7 +107,7 @@
         (br_if $quit
           (i32.or
               (f64.gt   (call $sum_of_sqrs (local.get $start_x) (local.get $start_y)) (global.get $BAILOUT))
-              (i32.ge_u (local.get $iter_count) (local.get $max_iters))
+              (i32.ge_u (local.get $iter_count) (global.get $MAX_ITERS))
           )
         )
 
@@ -136,15 +131,14 @@
         (export "mandel_iter")
         (param $x f64)
         (param $y f64)
-        (param $max_iters i32)
         (result i32)
 
     (local $return_val i32)
 
     (if (call $mandel_early_bailout (local.get $x) (local.get $y))
-      (then (local.set $return_val (local.get $max_iters)))
+      (then (local.set $return_val (global.get $MAX_ITERS)))
       (else (local.set $return_val
-              (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
+              (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0))
             )
       )
     )
@@ -153,22 +147,18 @@
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Draw the Mandelbrot set
-  (func $draw_mandelbrot
-        (export "draw_mandelbrot")
+  ;; Calculate one pixel of the Mandelbrot set
+  (func $gen_pixel_val
+        (export "gen_pixel_val")
         (param $x f64)
         (param $y f64)
-        (param $max_iters i32)
         (result i32)
 
     (local $return_val i32)
 
     (if (call $mandel_early_bailout (local.get $x) (local.get $y))
-      (then (local.set $return_val (local.get $max_iters)))
-      (else (local.set $return_val
-              (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
-            )
-      )
+      (then (local.set $return_val (global.get $MAX_ITERS)))
+      (else (local.set $return_val (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0))))
     )
 
     (local.get $return_val)

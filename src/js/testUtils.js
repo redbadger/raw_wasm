@@ -313,6 +313,7 @@ const showHostFns =
   hostFns =>
     Object
       .keys(hostFns)
+      .sort()
       .map(libName =>
         Object
           .keys(hostFns[libName])

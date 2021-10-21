@@ -5,7 +5,9 @@
 </head>
 <body>
   <section id="plotArea">
-    <canvas id="mandelImage" width="800" height="450"></canvas>
+    <p>Mouse position in canvas = (<span id="xCanvasCoord"></span>,<span id="yCanvasCoord"></span>)</p>
+    <p>Mouse position in complex plain = (<span id="xComplexCoord"></span>,<span id="yComplexCoord"></span>)</p>
+    <canvas id="mandelImage" width="800" height="450" style="border: 1px solid black"></canvas>
   </section>
 <script type="module">
 import {
@@ -25,23 +27,91 @@ import { colourTestMap }  from "./src/render/tests.js"
 const TEST_MODE   = true
 const SHOW_DETAIL = true
 
+const MAX_ITERS = 1000
+
+const DEFAULT_PPU = 200                   // Default pixels per unit (controls zoom level)
+const DEFAULT_MANDEL_ORIGIN = [-0.5, 0.0] // Default origin in the coordinate space of the Mandelbrot set
+const DEFAULT_MAX_ITERS = 1000            // Default number of iterations for the escape time algorithm
+const BAILOUT = 4.0                       // Bail out if the iterated value exceeds this threshold
+
+function $id(elId) { return document.getElementById(elId) }
+
+const mCanvas = $id('mandelImage')
+const ctx = mCanvas.getContext('2d')
+const img = ctx.createImageData(mCanvas.width, mCanvas.height)
+
+// Translate the mouse (X,Y) canvas position to (X,Y) coordinates in the complex plain
+const mouseAxisToCoordAxis = (cnvsDim, ppu, origin) => mousePos => origin + ((mousePos - (cnvsDim / 2)) / ppu)
+const mandelXToCoordXFn    = mouseAxisToCoordAxis(mCanvas.width,  DEFAULT_PPU, DEFAULT_MANDEL_ORIGIN[0])
+const mandelYToCoordYFn    = mouseAxisToCoordAxis(mCanvas.height, DEFAULT_PPU, DEFAULT_MANDEL_ORIGIN[1])
+
+const offsetToClampedPos = (offset, dim, offsetDim) => {
+  let pos = offset - ((offsetDim - dim) / 2)
+  return pos < 0 ? 0 : pos > dim ? dim : pos
+}
+
+const mousePositionOnCanvas = e => ({
+  "x_pos" : offsetToClampedPos(e.offsetX, e.target.width,  e.target.offsetWidth),
+  "y_pos" : offsetToClampedPos(e.offsetY, e.target.height, e.target.offsetHeight)
+})
+
+// Plot Julia set for current mouse pointer position in the Mandelbrot set
+const juliaPlot =
+  evt => {
+    let canvasCoords = mousePositionOnCanvas(evt)
+
+    $id('xCanvasCoord').innerHTML = canvasCoords.x_pos
+    $id('yCanvasCoord').innerHTML = canvasCoords.y_pos
+    $id('xComplexCoord').innerHTML = mandelXToCoordXFn(canvasCoords.x_pos)
+    $id('yComplexCoord').innerHTML = mandelYToCoordYFn(canvasCoords.y_pos) * -1
+  }
+
+mCanvas.addEventListener('mousemove', juliaPlot, false)
+
 // ---------------------------------------------------------------------------------------------------------------------
 // These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
 // dependencies on earlier modules
 const instantiationSequence = [
   new WasmModule('./build/complex.wasm', 'cplx'),
-  new WasmModule('./build/canvas.wasm',  'canvas'),
   new WasmModule('./build/mandel.wasm',  'mandel'),
+  new WasmModule('./build/canvas.wasm',  'canvas'),
 ]
 
-instantiateWasmModuleSequence(instantiationSequence, { math : Math })
-  .then(wasmModules => {
-    testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
-    testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
-    testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
-    // showHostFns(wasmModules.hostFunctions)
+const sharedMemory = new WebAssembly.Memory({ initial : 22, maximum : 25 })
+const i8MemBuffer = new Uint8ClampedArray(sharedMemory.buffer)
 
-    return wasmModules
+const importObject = {
+  math : Math,
+  plot : {
+    max_iters : MAX_ITERS
+  },
+  canvas : {
+    img      : sharedMemory,
+    width    : mCanvas.width,
+    height   : mCanvas.height,
+    ppu      : DEFAULT_PPU,
+    centre_x : DEFAULT_MANDEL_ORIGIN[0],
+    centre_y : DEFAULT_MANDEL_ORIGIN[1],
+  }
+}
+
+instantiateWasmModuleSequence(instantiationSequence, importObject)
+  .then(wasmModules => {
+    // testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
+    // testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
+    // testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
+    showHostFns(wasmModules.hostFunctions)
+
+    // Call WASM to plot the Mandelbrot set
+    wasmModules.canvas.instance.exports.mandel_plot(
+      mCanvas.width,
+      mCanvas.height,
+      DEFAULT_MANDEL_ORIGIN[0],
+      DEFAULT_MANDEL_ORIGIN[1]
+    )
+
+    img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height))
+    ctx.putImageData(img,0,0)
   })
 </script>
 </body>

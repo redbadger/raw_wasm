@@ -98,10 +98,9 @@ const instantiateWasmModuleSequence = async (moduleSequence, initialHostFns) => 
 
   for (let idx=0; idx < moduleSequence.length; idx++) {
     const thisMod = moduleSequence[idx]
+    const wasmObj = await WebAssembly.instantiateStreaming(fetch(thisMod.pathToWasmBin), wasmModAccumulator.hostFunctions)
 
-    console.log(`Instantiating ${thisMod.pathToWasmBin}`)
-
-    let wasmObj = await WebAssembly.instantiateStreaming(fetch(thisMod.pathToWasmBin), wasmModAccumulator.hostFunctions)
+    console.log(`${thisMod.pathToWasmBin} instantiated`)
 
     wasmModAccumulator.hostFunctions = packageWasmExports(
       wasmObj.instance,
