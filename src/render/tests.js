@@ -9,25 +9,51 @@ import {
   WasmFunctionTestValues,
 } from "../js/testUtils.js"
 
-const ALPHA = 255
 const RANGE_MIN = 0
-const RANGE_MAX = 255
+const RANGE_MAX = 1000
 
 /*
- * Test RGBA value returned for a number in the range 0-255
+ * Map iteration value over linear RGB colourspace
  */
-const test01 = new WasmFunctionTest("pixel_colour", FOUR_I32_IN_ONE_I32_OUT, "Value varies stepwise through range from 0 to 255")
+const test01 = new WasmFunctionTest(
+  "pixel_colour",
+  FOUR_I32_IN_ONE_I32_OUT,
+  "Map iteration value over linear RGB colourspace"
+)
 test01.setTestList([
-  new WasmFunctionTestValues([RANGE_MIN,   0, RANGE_MAX, ALPHA], [0xFFFF0000], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN,  16, RANGE_MAX, ALPHA], [0xFFDF2000], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN,  32, RANGE_MAX, ALPHA], [0xFFBF4000], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN,  64, RANGE_MAX, ALPHA], [0xFF7E8100], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN,  96, RANGE_MAX, ALPHA], [0xFF3EC100], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN, 128, RANGE_MAX, ALPHA], [0xFF010001], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN, 160, RANGE_MAX, ALPHA], [0xFF014041], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN, 192, RANGE_MAX, ALPHA], [0xFF018081], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN, 224, RANGE_MAX, ALPHA], [0xFF01C0C1], "hex"),
-  new WasmFunctionTestValues([RANGE_MIN, 255, RANGE_MAX, ALPHA], [0xFF01FEFF], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,    0, RANGE_MAX], [0xFFFF0000], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,   32, RANGE_MAX], [0xFFEE1100], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,   64, RANGE_MAX], [0xFFDE2100], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,   96, RANGE_MAX], [0xFFCE3100], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  128, RANGE_MAX], [0xFFBD4200], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  160, RANGE_MAX], [0xFFAD5200], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  192, RANGE_MAX], [0xFF9D6200], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  224, RANGE_MAX], [0xFF8C7300], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  256, RANGE_MAX], [0xFF7C8300], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  288, RANGE_MAX], [0xFF6C9300], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  320, RANGE_MAX], [0xFF5BA400], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  352, RANGE_MAX], [0xFF4BB400], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  384, RANGE_MAX], [0xFF3BC400], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  416, RANGE_MAX], [0xFF2AD500], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  448, RANGE_MAX], [0xFF1AE500], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  480, RANGE_MAX], [0xFF0AF500], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  512, RANGE_MAX], [0xFF010506], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  544, RANGE_MAX], [0xFF011516], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  576, RANGE_MAX], [0xFF012526], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  608, RANGE_MAX], [0xFF013637], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  640, RANGE_MAX], [0xFF014647], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  672, RANGE_MAX], [0xFF015657], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  704, RANGE_MAX], [0xFF016768], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  736, RANGE_MAX], [0xFF017778], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  768, RANGE_MAX], [0xFF018788], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  800, RANGE_MAX], [0xFF019899], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  832, RANGE_MAX], [0xFF01A8A9], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  864, RANGE_MAX], [0xFF01B8B9], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  896, RANGE_MAX], [0xFF01C8C9], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  928, RANGE_MAX], [0xFF01D9DA], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  960, RANGE_MAX], [0xFF01E9EA], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN,  992, RANGE_MAX], [0xFF01F9FA], "hex"),
+  new WasmFunctionTestValues([RANGE_MIN, 1000, RANGE_MAX], [0xFF01FEFF], "hex"),
 ])
 
 /*
@@ -90,7 +116,27 @@ test02.setTestList([
   ),
 ])
 
-const colourTestMap = [test01, test02].reduce(
+/*
+ * Map iteration value over HSL colourspace
+ */
+const HSL_MAX = 600
+
+const test03 = new WasmFunctionTest(
+  "value_to_rgb",
+  FOUR_I32_IN_ONE_I32_OUT,
+  "Map iteration value to HSL colourspace"
+)
+test03.setTestList([
+  new WasmFunctionTestValues([   0, HSL_MAX], [0xFF0000FF], "hex"),
+  new WasmFunctionTestValues([ 100, HSL_MAX], [0xFF00FFFF], "hex"),
+  new WasmFunctionTestValues([ 200, HSL_MAX], [0xFF00FF00], "hex"),
+  new WasmFunctionTestValues([ 300, HSL_MAX], [0xFFFFFF00], "hex"),
+  new WasmFunctionTestValues([ 400, HSL_MAX], [0xFFFF0000], "hex"),
+  new WasmFunctionTestValues([ 500, HSL_MAX], [0xFFFF00FF], "hex"),
+  new WasmFunctionTestValues([ 600, HSL_MAX], [0xFF0000FF], "hex"),
+])
+
+const colourTestMap = [test01, test02, test03].reduce(
   (map, test) => {
     map.set(test.function.name, test)
     return map
