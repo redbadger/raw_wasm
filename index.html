@@ -108,7 +108,7 @@ instantiateWasmModuleSequence(instantiationSequence, importObject)
       MAX_ITERS,
     )
 
-    img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height))
+    img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height * 4))
     ctx.putImageData(img,0,0)
   })
 </script>
