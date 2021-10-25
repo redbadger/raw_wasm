@@ -1,11 +1,15 @@
 # Writing in Raw WebAssembly Text
 
+
 This repo is an exercise in learning:
 
 1. How to write libraries in raw WebAssembly text
 1. How to get those libraries to interact
+1. Putting it all together to plot the Mandelbrot Set
 
-Two WASM modules (`complex.wasm` and `mandel.wasm`) are instantiated sequentially.  The instantiation process allows each subsequent module to import (if necessary) the functions exported by the previous module instance.
+![./Screenshot.png](./Screenshot.png)
+
+Two WASM modules (`mandel.wasm` and `canvas.wasm`) are instantiated sequentially.  The instantiation process allows each subsequent module to import (if necessary) the functions exported by the previous module instance.
 
 ## Local Execution
 

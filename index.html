@@ -22,6 +22,9 @@
     <tr><td>Y origin</td>
         <td><input id="origin_y" type="range" min="-2" max="2" step="0.01" value="0"></td>
         <td><input id="origin_y_value" type="input"></td></tr>
+    <tr><td>WASM Execution Time</td>
+        <td style="text-align: right;"><span id="wasm_exec_time"></span></td>
+        <td>ms</td></tr>
     </table>
     <canvas id="mandelImage" width="800" height="450" style="border: 1px solid black"></canvas>
   </section>
@@ -36,22 +39,21 @@ import {
   instantiateWasmModuleSequence
 } from "./src/js/wasmUtils.js"
 
-import { complexTestMap } from "./src/complex/tests.js"
+// import { complexTestMap } from "./src/complex/tests.js"
 import { mandelTestMap }  from "./src/mandel/tests.js"
 import { colourTestMap }  from "./src/render/tests.js"
 
 const TEST_MODE   = true
 const SHOW_DETAIL = true
 
-const MAX_ITERS = 1000
-
-const DEFAULT_PPU = 200                   // Default pixels per unit (controls zoom level)
-const DEFAULT_ORIGIN_X = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
-const DEFAULT_ORIGIN_Y = 0.0              // Centre Y canvas pixel in the Mandelbort coordinate space
-const DEFAULT_MAX_ITERS = 1000            // Default number of iterations for the escape time algorithm
-const BAILOUT = 4.0                       // Bail out if the iterated value exceeds this threshold
+const DEFAULT_PPU       = 8300             // Default pixels per unit (controls zoom level)
+const DEFAULT_ORIGIN_X  = -0.65            // Centre X canvas pixel in the Mandelbrot coordinate space
+const DEFAULT_ORIGIN_Y  = -0.35            // Centre Y canvas pixel in the Mandelbort coordinate space
+const DEFAULT_MAX_ITERS = 650              // Default number of iterations for the escape time algorithm
 
 function $id(elId) { return document.getElementById(elId) }
+
+const toMilliTenths = val => Math.round(val * 10000) / 10000
 
 const mCanvas = $id('mandelImage')
 const ctx = mCanvas.getContext('2d')
@@ -73,8 +75,8 @@ const mousePositionOnCanvas = e => ({
   "y_pos" : offsetToClampedPos(e.offsetY, e.target.height, e.target.offsetHeight)
 })
 
-// Plot Julia set for current mouse pointer position in the Mandelbrot set
-const juliaPlot =
+// Track mouse pointer position in the Mandelbrot set
+const mouseTrack =
   evt => {
     let canvasCoords = mousePositionOnCanvas(evt)
 
@@ -84,13 +86,23 @@ const juliaPlot =
     $id('yComplexCoord').innerHTML = window.mandelYToCoordYFn(canvasCoords.y_pos) * -1
   }
 
-mCanvas.addEventListener('mousemove', juliaPlot, false)
+mCanvas.addEventListener('mousemove', mouseTrack, false)
+
+const drawMandelbrotSet =
+  (w, h, x, y, z, i) => {
+    let then = window.performance.now()
+    window.mandel_plot(w, h, x, y, z, i)
+    $id("wasm_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
+
+    img.data.set(i8MemBuffer.slice(0, w * h * 4))
+    ctx.putImageData(img,0,0)
+  }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
 // dependencies on earlier modules
 const instantiationSequence = [
-  new WasmModule('./build/complex.wasm', 'cplx'),
+  // new WasmModule('./build/complex.wasm', 'cplx'),
   new WasmModule('./build/mandel.wasm',  'mandel'),
   new WasmModule('./build/canvas.wasm',  'canvas'),
 ]
@@ -102,8 +114,8 @@ function update_img(evt) {
   switch(evt.target.id) {
     case "origin_x":
       document.getElementById('origin_x_value').value = evt.target.value
-      // Call WASM to plot the Mandelbrot set
-      window.mandel_plot(
+
+      drawMandelbrotSet(
         mCanvas.width,
         mCanvas.height,
         evt.target.value,
@@ -115,8 +127,8 @@ function update_img(evt) {
 
     case "origin_y":
       document.getElementById('origin_y_value').value = evt.target.value
-      // Call WASM to plot the Mandelbrot set
-      window.mandel_plot(
+
+      drawMandelbrotSet(
         mCanvas.width,
         mCanvas.height,
         $id('origin_x').value,
@@ -128,8 +140,8 @@ function update_img(evt) {
 
     case "zoom":
       document.getElementById('zoom_value').value = evt.target.value
-      // Call WASM to plot the Mandelbrot set
-      window.mandel_plot(
+
+      drawMandelbrotSet(
         mCanvas.width,
         mCanvas.height,
         $id('origin_x').value,
@@ -141,8 +153,8 @@ function update_img(evt) {
 
     case "max_iters":
       document.getElementById('max_iters_value').value = evt.target.value
-      // Call WASM to plot the Mandelbrot set
-      window.mandel_plot(
+
+      drawMandelbrotSet(
         mCanvas.width,
         mCanvas.height,
         $id('origin_x').value,
@@ -151,27 +163,34 @@ function update_img(evt) {
         evt.target.value,
       )
       break
+
     default:
   }
-
-  img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height * 4))
-  ctx.putImageData(img,0,0)
 }
 
-let zoom_slider      = $id("zoom")
-let max_iters_slider = $id("max_iters")
-let origin_x_slider  = $id("origin_x")
-let origin_y_slider  = $id("origin_y")
+function resetUI() {
+  let zoom_slider      = $id("zoom")
+  let max_iters_slider = $id("max_iters")
+  let origin_x_slider  = $id("origin_x")
+  let origin_y_slider  = $id("origin_y")
 
-zoom_slider.addEventListener("input", update_img, false)
-max_iters_slider.addEventListener("input", update_img, false)
-origin_x_slider.addEventListener("input", update_img, false)
-origin_y_slider.addEventListener("input", update_img, false)
+  zoom_slider.addEventListener("input", update_img, false)
+  max_iters_slider.addEventListener("input", update_img, false)
+  origin_x_slider.addEventListener("input", update_img, false)
+  origin_y_slider.addEventListener("input", update_img, false)
 
-$id('zoom_value').value = $id('zoom').value
-$id('max_iters_value').value = $id('max_iters').value
-$id('origin_x_value').value = origin_x_slider.value
-$id('origin_y_value').value = origin_y_slider.value
+  $id('zoom').value = DEFAULT_PPU
+  $id('zoom_value').value = DEFAULT_PPU
+
+  $id('max_iters').value = DEFAULT_MAX_ITERS
+  $id('max_iters_value').value = DEFAULT_MAX_ITERS
+
+  $id('origin_x').value = DEFAULT_ORIGIN_X
+  $id('origin_x_value').value = DEFAULT_ORIGIN_X
+
+  $id('origin_y').value = DEFAULT_ORIGIN_Y
+  $id('origin_y_value').value = DEFAULT_ORIGIN_Y
+}
 
 const importObject = {
   math : Math,
@@ -187,20 +206,19 @@ instantiateWasmModuleSequence(instantiationSequence, importObject)
     // testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
     // showHostFns(wasmModules.hostFunctions)
 
-    // Call WASM to plot the Mandelbrot set at default location and zoom level
-    wasmModules.canvas.instance.exports.mandel_plot(
+    window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
+
+    resetUI()
+
+    // Draw the Mandelbrot set at default location and zoom level
+    drawMandelbrotSet(
       mCanvas.width,
       mCanvas.height,
       DEFAULT_ORIGIN_X,
       DEFAULT_ORIGIN_Y,
       DEFAULT_PPU,
-      MAX_ITERS,
+      DEFAULT_MAX_ITERS,
     )
-
-    img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height * 4))
-    ctx.putImageData(img,0,0)
-
-    window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
   })
 </script>
 </body>

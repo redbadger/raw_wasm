@@ -1,14 +1,42 @@
 (module
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Import complex functions
-  (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
-  (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
+  ;; (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
+  ;; (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
 
   (global $BAILOUT f64 (f64.const 4.0))
 
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Utility functions
   (func $incr_i64 (param $val i32) (result i32) (i32.add (local.get $val) (i32.const 1)))
+
+  ;; -------------------------------------------------------------------------------------------------------------------
+  ;; Sum of squares of two values
+  ;; sum_of_sqrs(x:f64, y:f64):f64 => x^2 + y^2
+  (func $sum_of_sqrs
+        (export "sum_of_sqrs")
+        (param $x f64)
+        (param $y f64)
+        (result f64)
+    (f64.add
+      (f64.mul (local.get $x) (local.get $x))
+      (f64.mul (local.get $y) (local.get $y))
+    )
+  )
+
+  ;; -------------------------------------------------------------------------------------------------------------------
+  ;; Difference of squares of two values
+  ;; diff_of_sqrs(x:f64, y:f64):f64 => x^2 - y^2
+  (func $diff_of_sqrs
+        (export "diff_of_sqrs")
+        (param $x f64)
+        (param $y f64)
+        (result f64)
+    (f64.sub
+      (f64.mul (local.get $x) (local.get $x))
+      (f64.mul (local.get $y) (local.get $y))
+    )
+  )
 
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Does the point lie within the main cardioid?
