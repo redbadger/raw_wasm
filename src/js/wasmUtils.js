@@ -12,8 +12,8 @@ function WasmDatatype(label, tolerance) {
 
 // Due to floating point inaccuracies, comparing test results against expected values requires the use of (somewhat
 // arbitrary) tolerance value
-const F64 = new WasmDatatype("f64", 0.0000000000000005)
-const F32 = new WasmDatatype("f32", 0.0000000000000005)
+const F64 = new WasmDatatype("f64", 0.0000000000005)
+const F32 = new WasmDatatype("f32", 0.000000005)
 const I32 = new WasmDatatype("i32")
 
 /* ---------------------------------------------------------------------------------------------------------------------
@@ -118,6 +118,7 @@ const instantiateWasmModuleSequence = async (moduleSequence, initialHostFns) => 
  * Public API
  */
 export {
+  WasmInterfaceType,
   WasmModule,
   instantiateWasmModuleSequence,
 

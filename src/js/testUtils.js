@@ -6,6 +6,8 @@ import { F32, F64 } from './wasmUtils.js'
 class FormatI32 {
   static #hexChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
+  static #byteToHexStr = (hexStr, b) => `${hexStr}${this.#hexChars[b >> 4]}${this.#hexChars[b & 0x0F]}`
+
   /* -------------------------------------------------------------------------------------------------------------------
    * Format an i32 as a hex string.
    * Use a 4-byte ArrayBuffer as the foundation on which to overlay two masks. This allows a single, 32-bit integer to
@@ -20,9 +22,7 @@ class FormatI32 {
         mask32[0] = i32
 
         // reduceRight is needed to preserve little-endian byte order!
-        return mask8.reduceRight(
-          (hexStr, n) => `${hexStr}${this.#hexChars[n >> 4]}${this.#hexChars[n & 0x0F]}`,
-          "0x")
+        return mask8.reduceRight(this.#byteToHexStr, "0x")
       })(new Uint32Array(byteArray), new Uint8ClampedArray(byteArray))
     )(new ArrayBuffer(4))
 

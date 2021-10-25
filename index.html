@@ -82,14 +82,10 @@ const i8MemBuffer = new Uint8ClampedArray(sharedMemory.buffer)
 
 const importObject = {
   math : Math,
-  plot : {
-    max_iters : MAX_ITERS
-  },
   canvas : {
     img      : sharedMemory,
     width    : mCanvas.width,
     height   : mCanvas.height,
-    ppu      : DEFAULT_PPU,
     centre_x : DEFAULT_MANDEL_ORIGIN[0],
     centre_y : DEFAULT_MANDEL_ORIGIN[1],
   }
@@ -100,14 +96,16 @@ instantiateWasmModuleSequence(instantiationSequence, importObject)
     // testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
     // testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
     // testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
-    showHostFns(wasmModules.hostFunctions)
+    // showHostFns(wasmModules.hostFunctions)
 
     // Call WASM to plot the Mandelbrot set
     wasmModules.canvas.instance.exports.mandel_plot(
       mCanvas.width,
       mCanvas.height,
       DEFAULT_MANDEL_ORIGIN[0],
-      DEFAULT_MANDEL_ORIGIN[1]
+      DEFAULT_MANDEL_ORIGIN[1],
+      DEFAULT_PPU,
+      MAX_ITERS,
     )
 
     img.data.set(i8MemBuffer.slice(0, mCanvas.width * mCanvas.height))
