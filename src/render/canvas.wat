@@ -1,6 +1,6 @@
 (module
   ;; Canvas image memory from host environment
-  (import "canvas" "img" (memory 22))
+  (import "canvas" "mImage" (memory 22))
 
   (import "mandel" "gen_pixel_val" (func $gen_pixel_val (param f64 f64 i32) (result i32)))
 

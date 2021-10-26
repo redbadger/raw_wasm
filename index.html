@@ -55,9 +55,9 @@ function $id(elId) { return document.getElementById(elId) }
 
 const toMilliTenths = val => Math.round(val * 10000) / 10000
 
-const mCanvas = $id('mandelImage')
-const ctx = mCanvas.getContext('2d')
-const img = ctx.createImageData(mCanvas.width, mCanvas.height)
+const mCanvas  = $id('mandelImage')
+const mContext = mCanvas.getContext('2d')
+const mImage   = mContext.createImageData(mCanvas.width, mCanvas.height)
 
 // Translate the mouse (X,Y) canvas position to (X,Y) coordinates in the complex plain
 const mouseAxisToCoordAxis = (cnvsDim, ppu, origin) => mousePos => origin + ((mousePos - (cnvsDim / 2)) / ppu)
@@ -94,21 +94,25 @@ const drawMandelbrotSet =
     window.mandel_plot(w, h, x, y, z, i)
     $id("wasm_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
 
-    img.data.set(i8MemBuffer.slice(0, w * h * 4))
-    ctx.putImageData(img,0,0)
+    mImage.data.set(imageBuffer.slice(0, w * h * 4))
+    mContext.putImageData(mImage,0,0)
   }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
 // dependencies on earlier modules
 const instantiationSequence = [
-  // new WasmModule('./build/complex.wasm', 'cplx'),
-  new WasmModule('./build/mandel.wasm',  'mandel'),
-  new WasmModule('./build/canvas.wasm',  'canvas'),
+  // new WasmModule('./build/complex.wasm',       'cplx'),
+  new WasmModule('./build/mandel.wasm',         'mandel'),
+  new WasmModule('./build/colour_palette.wasm', 'colours'),
+  new WasmModule('./build/canvas.wasm',         'canvas'),
 ]
 
-const sharedMemory = new WebAssembly.Memory({ initial : 22, maximum : 25 })
-const i8MemBuffer = new Uint8ClampedArray(sharedMemory.buffer)
+const paletteData   = new WebAssembly.Memory({ initial : 4 })
+const paletteBuffer = new Uint8ClampedArray(paletteData.buffer)
+
+const imageData   = new WebAssembly.Memory({ initial : 22, maximum : 25 })
+const imageBuffer = new Uint8ClampedArray(imageData.buffer)
 
 function update_img(evt) {
   switch(evt.target.id) {
@@ -195,7 +199,8 @@ function resetUI() {
 const importObject = {
   math : Math,
   canvas : {
-    img : sharedMemory,
+    mImage : imageData,
+    palette : paletteData,
   }
 }
 
