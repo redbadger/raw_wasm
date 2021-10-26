@@ -1,6 +1,8 @@
 (module
   ;; Colour palette
-  (import "canvas" "palette" (memory 4))
+  (import "js" "shared_mem" (memory 26))
+
+  (global $palette_offset (import "js" "palette_offset") i32)
 
   ;; For now, each pixel's alpha value is hard-coded to fully opaque
   (global $ALPHA i32 (i32.const 255))
@@ -64,6 +66,7 @@
         (export "hsl_to_rgb")
         (param $palette_size i32)
     (local $palette_size_f32 f32)
+    (local $pixel_colour i32)
     (local $idx i32)
     (local $bandwidth f32)  ;; Width of a colour band relative to $palette_size
 
@@ -158,27 +161,32 @@
           )
         )
 
-        ;; Combine RGBA component values in little-endian order into a single i32
-        (i32.or
+        ;; Combine RGBA component values into a single i32 in little-endian order
+        (local.set $pixel_colour
           (i32.or
-            (i32.shl (global.get $ALPHA) (i32.const 24))
-            (i32.shl (local.get $blue)   (i32.const 16))
-          )
-          (i32.or
-            (i32.shl (local.get $green) (i32.const 8))
-            (local.get $red)
+            (i32.or
+              (i32.shl (global.get $ALPHA) (i32.const 24))
+              (i32.shl (local.get $blue)   (i32.const 16))
+            )
+            (i32.or
+              (i32.shl (local.get $green) (i32.const 8))
+              (local.get $red)
+            )
           )
         )
 
         ;; Store colour palette value
-        (i32.store (i32.mul (local.get $idx) (i32.const 4)))
+        (i32.store
+          (i32.add
+            (global.get $palette_offset)
+            (i32.mul (local.get $idx) (i32.const 4))
+          )
+          (local.get $pixel_colour)
+        )
 
         (local.set $idx (i32.add (local.get $idx) (i32.const 1)))
         (br $palette)
       )
     )
-
-    ;; The last palette value is always black
-    (i32.store (i32.mul (local.get $idx) (i32.const 4)) (global.get $BLACK))
   )
 )

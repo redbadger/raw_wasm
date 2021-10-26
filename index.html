@@ -40,11 +40,13 @@ import {
 } from "./src/js/wasmUtils.js"
 
 // import { complexTestMap } from "./src/complex/tests.js"
-import { mandelTestMap }  from "./src/mandel/tests.js"
-import { colourTestMap }  from "./src/render/tests.js"
+// import { mandelTestMap }  from "./src/mandel/tests.js"
+// import { colourTestMap }  from "./src/render/tests.js"
 
-const TEST_MODE   = true
-const SHOW_DETAIL = true
+const TEST_MODE   = false
+const SHOW_DETAIL = false
+
+const WASM_PAGE_SIZE = 65536
 
 const DEFAULT_PPU       = 8300             // Default pixels per unit (controls zoom level)
 const DEFAULT_ORIGIN_X  = -0.65            // Centre X canvas pixel in the Mandelbrot coordinate space
@@ -55,20 +57,25 @@ function $id(elId) { return document.getElementById(elId) }
 
 const toMilliTenths = val => Math.round(val * 10000) / 10000
 
-const mCanvas  = $id('mandelImage')
-const mContext = mCanvas.getContext('2d')
-const mImage   = mContext.createImageData(mCanvas.width, mCanvas.height)
+const mCanvas     = $id('mandelImage')
+const mContext    = mCanvas.getContext('2d')
+const mImage      = mContext.createImageData(mCanvas.width, mCanvas.height)
+const mImageSize  = mCanvas.width * mCanvas.height * 4
+const mImagePages = Math.ceil(mImageSize / WASM_PAGE_SIZE)
 
-// Translate the mouse (X,Y) canvas position to (X,Y) coordinates in the complex plain
+// Arbitrarily allocate 4 pages for the colour palette.
+// This allows for images to be calculated with a maximum iteration value up to 32768
+const palettePages = 4
+
+// Translate the mouse X or Y canvas position to the corresponding X or Y coordinate in the complex plain
 const mouseAxisToCoordAxis = (cnvsDim, ppu, origin) => mousePos => origin + ((mousePos - (cnvsDim / 2)) / ppu)
 
 window.mandelXToCoordXFn = mouseAxisToCoordAxis(mCanvas.width,  DEFAULT_PPU, DEFAULT_ORIGIN_X)
 window.mandelYToCoordYFn = mouseAxisToCoordAxis(mCanvas.height, DEFAULT_PPU, DEFAULT_ORIGIN_Y)
 
-const offsetToClampedPos = (offset, dim, offsetDim) => {
-  let pos = offset - ((offsetDim - dim) / 2)
-  return pos < 0 ? 0 : pos > dim ? dim : pos
-}
+const offsetToClampedPos = (offset, dim, offsetDim) =>
+  (pos => pos < 0 ? 0 : pos > dim ? dim : pos)
+  (offset - ((offsetDim - dim) / 2))
 
 const mousePositionOnCanvas = e => ({
   "x_pos" : offsetToClampedPos(e.offsetX, e.target.width,  e.target.offsetWidth),
@@ -94,7 +101,7 @@ const drawMandelbrotSet =
     window.mandel_plot(w, h, x, y, z, i)
     $id("wasm_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
 
-    mImage.data.set(imageBuffer.slice(0, w * h * 4))
+    mImage.data.set(wasmMemBuff.slice(0, w * h * 4))
     mContext.putImageData(mImage,0,0)
   }
 
@@ -108,11 +115,8 @@ const instantiationSequence = [
   new WasmModule('./build/canvas.wasm',         'canvas'),
 ]
 
-const paletteData   = new WebAssembly.Memory({ initial : 4 })
-const paletteBuffer = new Uint8ClampedArray(paletteData.buffer)
-
-const imageData   = new WebAssembly.Memory({ initial : 22, maximum : 25 })
-const imageBuffer = new Uint8ClampedArray(imageData.buffer)
+const wasmMemory  = new WebAssembly.Memory({ initial : mImagePages + palettePages })
+const wasmMemBuff = new Uint8ClampedArray(wasmMemory.buffer)
 
 function update_img(evt) {
   switch(evt.target.id) {
@@ -158,6 +162,9 @@ function update_img(evt) {
     case "max_iters":
       document.getElementById('max_iters_value').value = evt.target.value
 
+      // Update the colour palette
+      window.hsl_to_rgb(evt.target.value)
+
       drawMandelbrotSet(
         mCanvas.width,
         mCanvas.height,
@@ -198,9 +205,10 @@ function resetUI() {
 
 const importObject = {
   math : Math,
-  canvas : {
-    mImage : imageData,
-    palette : paletteData,
+  js : {
+    shared_mem : wasmMemory,
+    img_offset : 0,
+    palette_offset : mImagePages * WASM_PAGE_SIZE,
   }
 }
 
@@ -212,10 +220,14 @@ instantiateWasmModuleSequence(instantiationSequence, importObject)
     // showHostFns(wasmModules.hostFunctions)
 
     window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
+    window.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
 
     resetUI()
 
-    // Draw the Mandelbrot set at default location and zoom level
+    // Generate the colour palette
+    window.hsl_to_rgb(DEFAULT_MAX_ITERS)
+
+      // Draw the Mandelbrot set at default location and zoom level
     drawMandelbrotSet(
       mCanvas.width,
       mCanvas.height,
