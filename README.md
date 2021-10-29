@@ -2,25 +2,41 @@
 
 ## Motivation
 
-The purpose of learning to write in raw WebAssembly Text is to achieve the following goals:
+The purpose of learning to write in raw WebAssembly Text (WAT) is to achieve the following goals:
 
-1. Create code that compiles to the smallest possible binary file
+1. Create code that compiles to the smallest possible (or at least very small) binary file
 1. Create code that runs really fast
 
 Some would argue that neither of these tasks need to be performed by humans because modern compilers are efficient enough to relieve us of this particular workload.
-Well, maybe; but not really.
+Well, maybe &mdash; but not really.
 
-The WASM binary files that generate the Mandelbrot and Julia sets occupy just over 1.5 Kb.
-The equivalent code written Rust then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb
+By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.5 Kb (and further size reductions are still possible).
+However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
 
-The following concepts needed to be learnt and understood:
+It should also be pointed out that just because a binary file is small does not means that it runs quickly.
+On the one hand, the fewer the number instructions needed to perform a task, the faster that task can be accomplished; however, certain WAT instructions should be either avoided altogether or used as infrequently as possible because they are expensive.
 
-1. How to write libraries in raw WebAssembly Text
+For example, the instruction `f64.promote_f32` offers a convenient way to promote a 32-bit floating point value to a 64-bit floating point value.
+However, using this instruction inside a loop executed 360,000 times doubled the execution time of that loop...
+
+## Objectives
+
+This exercise aims to achieve the following objectives:
+
+1. How to write and test libraries in raw WebAssembly Text
 1. How to get those libraries to interact
 1. Actually implementing the code that plots the Mandelbrot and Julia Sets
 
 Three WASM modules are instantiated sequentially: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`.
 The instantiation process allows each subsequent module to import (if necessary) any functions exported by the previous module instance.
+
+> ### Testing
+> 
+> During development, it was necessary to test the functions exported from each WASM library.
+> So I developed a small test framework that picks up a WASM module and attempts to find a test for every exported function.
+> It then reports on whether or not a test was found for each exported function, and what the outcome of each test was.
+> 
+> This code is still present in the `index.html` file, but has been commented out.
 
 ## Implementation
 
