@@ -32,16 +32,16 @@ As you move the mouse pointer over the image of the Mandebrot Set, the Julia Set
 
 By moving the sliders, you can change the following parameters of the Mandelbrot Set:
 
-* ***Maximum Iterations***
+* ***Maximum Iterations***  
    The maximum number of times the escape time algorithm is run to calculate a pixel's value.
    The higher this value, the longer the escape time algorithm will take to run.
    The calculation of the Mandelbrot Set can be optimised by knowing that any point within the main cardioid or the period-2 bulb will always escape to infinity, thus such points can immediately be coloured black.
    However, no such optimisation exists for calculating a Julia Set.
 
-* ***Zoom level***
+* ***Zoom level***  
    The zoom level shows the number of pixels per unit on the complex plane
 
-* ***X Origin*** and ***Y Origin***
+* ***X Origin*** and ***Y Origin***  
    Consider that the Mandelbrot Set canvas is a viewport looking onto some region of the complex plane.
    The centre of the Julia Set canvas is fixed at `(0,0)`, but the centre of the Mandelbrot Set canvas can be shifted.
    In order to render the Mandelbrot Set in the centre of the canvas, the X and Y origin values are set to `(-0.5, 0)`.
