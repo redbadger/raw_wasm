@@ -19,7 +19,7 @@ The following concepts needed to be learnt and understood:
 1. How to get those libraries to interact
 1. Actually implementing the code that plots the Mandelbrot and Julia Sets
 
-Two WASM modules (`mandel.wasm` and `canvas.wasm`) are instantiated sequentially.
+Three WASM modules are instantiated sequentially: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`.
 The instantiation process allows each subsequent module to import (if necessary) any functions exported by the previous module instance.
 
 ## Implementation
