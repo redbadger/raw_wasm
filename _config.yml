@@ -1,1 +1,17 @@
+title: Writing in Raw WebAssembly Text
+email: chris.whealy@red-badger.com
+description: >- # this means to ignore newlines until "baseurl:"
+  Learning how to write raw WebAssembly Text modules that can interact with each other
+baseurl: "/raw_wasm" # the subpath of your site, e.g. /blog
+url: "https://redbadger.github.io"
+twitter_username: LogaRhythm
+github_username:  ChrisWhealy
+
+# Build settings
 theme: jekyll-theme-minimal
+plugins:
+  - jekyll-feed
+
+exclude:
+   - Gemfile
+   - Gemfile.lock
