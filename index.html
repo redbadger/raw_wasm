@@ -13,8 +13,7 @@ input[type="range"].horizontal {
     <table>
       <tr><td>Maximum iterations</td>
           <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
-          <td><span id="max_iters_txt"></span></td>
-          <td><input id="reset_ui_button" type="button" value="Reset all sliders"></td></tr>
+          <td><span id="max_iters_txt"></span></td></tr>
       <tr><td>Zoom</td>
           <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
           <td><span id="zoom_txt"></span></td></tr>
@@ -24,15 +23,15 @@ input[type="range"].horizontal {
     <tr><td>Y origin</td>
         <td><input class="horizontal" id="origin_y" type="range" min="-2" max="2" step="0.01" value="0"></td>
         <td><span id="origin_y_txt"></span></td></tr>
-    <tr><td colspan="3">Mouse position over Mandelbrot canvas (<span id="x_canvas_pos"></span>,<span id="y_canvas_pos"></span>)</td>
-        <td colspan="2">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
-    <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td>
-      <td>Julia set calculated in <span id="julia_exec_time"></span>ms</td>
-      <td></td></tr>
+    <tr><td><input id="reset_ui_button" type="button" value="Reset all sliders"></td></tr>
+    <tr><td colspan="3">Mouse position over Mandelbrot canvas (<span id="x_canvas_pos"></span>,<span id="y_canvas_pos"></span>)</td></tr>
+    <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
     <tr><td colspan="3">
             <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
-        <td colspan="2">
-            <canvas id="juliaImage"  style="border: 1px solid black"></canvas></td></tr>
+    <tr><td colspan="3">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
+    <tr><td colspan="3">Julia set calculated in <span id="julia_exec_time"></span>ms</td></tr>
+    <tr><td colspan="3">
+      <canvas id="juliaImage"  style="border: 1px solid black"></canvas></td></tr>
     </table>
   </section>
 <script type="module">
