@@ -62,6 +62,24 @@
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
+  ;; Write pixel colour to memory
+  (func $write_pixel_colour
+        (param $pixel_val i32)
+        (param $pixel_offset i32)
+        (param $max_iters i32)
+    (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
+      (then
+        ;; Any pixel that hits $max_iters is arbitrarily set to black
+        (i32.store (local.get $pixel_offset) (global.get $BLACK))
+      )
+      (else
+        ;; Store the colour fetched from the palette
+        (i32.store (local.get $pixel_offset) (call $load_from_palette (local.get $pixel_val)))
+      )
+    )
+  )
+
+  ;; -------------------------------------------------------------------------------------------------------------------
   ;; Plot Mandelbrot set
   (func $mandel_plot
         (export "mandel_plot")
@@ -117,17 +135,7 @@
               )
             )
 
-            ;; Transform pixel iteration value to RGBA colour
-            (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
-              (then
-                ;; Any pixel that hits $max_iters is arbitrarily set to black
-                (i32.store (local.get $pixel_offset) (global.get $BLACK))
-              )
-              (else
-                ;; Store the colour fetched from the palette
-                (i32.store (local.get $pixel_offset) (call $load_from_palette (local.get $pixel_val)))
-              )
-            )
+            (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
 
             ;; Increment column and memory offset counters
             (local.set $x_pos (i32.add (local.get $x_pos) (i32.const 1)))
@@ -169,13 +177,13 @@
     (local $pixel_colour i32)  ;; Calculated pixel colour
     (local $j_ppu i32)         ;; Zoom level of Julia set image
 
-    ;; Julia sets have a fixed zoom level
+    ;; Julia set images always have a fixed zoom level of 200 pixels per unit
     (local.set $j_ppu (i32.const 200))
 
     ;; Point to the start of the Julia set memory space
     (local.set $pixel_offset (global.get $julia_img_offset))
 
-    ;; Convert mouse position over Mandelbrot set to Julia set coordinates
+    ;; Convert mouse position over Mandelbrot set to complex plane coordinates
     (local.set $mandel_x_f64
       (call $pxl_to_coord_with_offset
         (local.get $mandel_x)
@@ -228,17 +236,7 @@
               )
             )
 
-            ;; Transform pixel iteration value to RGBA colour
-            (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
-              (then
-                ;; Any pixel that hits $max_iters is arbitrarily set to black
-                (i32.store (local.get $pixel_offset) (global.get $BLACK))
-              )
-              (else
-                ;; Look up pixel's palette colour
-                (i32.store (local.get $pixel_offset) (call $load_from_palette (local.get $pixel_val)))
-              )
-            )
+            (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
 
             ;; Increment column and memory offset counters
             (local.set $x_pos (i32.add (local.get $x_pos) (i32.const 1)))

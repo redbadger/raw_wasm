@@ -66,6 +66,7 @@ const toMilliTenths = val => Math.round(val * 10000) / 10000
 function $id(el) { return document.getElementById(el) }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Manage sliders
 let sliders = {
   'zoom' :      { currentValue : DEFAULT_PPU,       defaultValue : DEFAULT_PPU,       asInt : true },
   'max_iters' : { currentValue : DEFAULT_MAX_ITERS, defaultValue : DEFAULT_MAX_ITERS, asInt : true },
@@ -96,7 +97,7 @@ const update_slider = sId => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Canvas and memory allocation
+// Canvas and WASM memory allocation
 const mCanvas  = $id('mandelImage')
 mCanvas.width  = DEFAULT_CANVAS_WIDTH
 mCanvas.height = DEFAULT_CANVAS_HEIGHT
