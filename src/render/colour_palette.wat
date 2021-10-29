@@ -1,6 +1,6 @@
 (module
   ;; Colour palette
-  (import "js" "shared_mem" (memory 26))
+  (import "js" "shared_mem" (memory 30))
 
   (global $palette_offset (import "js" "palette_offset") i32)
 
@@ -60,8 +60,7 @@
 
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Generate a linear colour palette where the HSL angle maps to the palette index
-  ;; The palette data is written to memory with offset 0 holding the palette size and all subsequent entries are i32's
-  ;; in little-endian format: ABGR
+  ;; The global value $palette_offset indicates where the palette data starts
   (func $hsl_to_rgb
         (export "hsl_to_rgb")
         (param $palette_size i32)
@@ -92,9 +91,6 @@
     (local.set $band4 (i32.trunc_f32_u (f32.nearest (f32.mul (local.get $bandwidth) (f32.const 4)))))
     (local.set $band5 (i32.trunc_f32_u (f32.nearest (f32.mul (local.get $bandwidth) (f32.const 5)))))
     (local.set $band6 (i32.trunc_f32_u (f32.nearest (local.get $palette_size_f32))))
-
-    ;; Store palette size
-    (i32.store (i32.const 0) (local.get $palette_size))
 
     (loop $palette
       (block $exit_loop

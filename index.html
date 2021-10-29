@@ -2,31 +2,38 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<style>
+input[type="range"].horizontal {
+  width: 400px
+}
+</style>
 </head>
 <body>
   <section id="plotArea">
     <table>
-      <tr><td colspan="2">Mouse position in canvas</td>
-          <td>(<span id="xCanvasCoord"></span>,<span id="yCanvasCoord"></span>)</td></tr>
-      <tr><td colspan="2">Mouse position in complex plane</td>
-          <td>(<span id="xComplexCoord"></span>,<span id="yComplexCoord"></span>)</td></tr>
       <tr><td>Maximum iterations</td>
-          <td><input id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
-          <td><input id="max_iters_value" type="input"></td></tr>
+          <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
+          <td><span id="max_iters_txt"></span></td>
+          <td><input id="reset_ui_button" type="button" value="Reset all sliders"></td></tr>
       <tr><td>Zoom</td>
-          <td><input id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
-          <td><input id="zoom_value" type="input"></td></tr>
+          <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
+          <td><span id="zoom_txt"></span></td></tr>
       <tr><td>X origin</td>
-        <td><input id="origin_x" type="range" min="-2" max="2" step="0.01" value="-0.5"></td>
-        <td><input id="origin_x_value" type="input"></td></tr>
+        <td><input class="horizontal" id="origin_x" type="range" min="-2" max="2" step="0.01" value="-0.5"></td>
+        <td><span id="origin_x_txt"></span></td></tr>
     <tr><td>Y origin</td>
-        <td><input id="origin_y" type="range" min="-2" max="2" step="0.01" value="0"></td>
-        <td><input id="origin_y_value" type="input"></td></tr>
-    <tr><td>WASM Execution Time</td>
-        <td style="text-align: right;"><span id="wasm_exec_time"></span></td>
-        <td>ms</td></tr>
+        <td><input class="horizontal" id="origin_y" type="range" min="-2" max="2" step="0.01" value="0"></td>
+        <td><span id="origin_y_txt"></span></td></tr>
+    <tr><td colspan="3">Mouse position over Mandelbrot canvas (<span id="x_canvas_pos"></span>,<span id="y_canvas_pos"></span>)</td>
+        <td colspan="2">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
+    <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td>
+      <td>Julia set calculated in <span id="julia_exec_time"></span>ms</td>
+      <td></td></tr>
+    <tr><td colspan="3">
+            <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
+        <td colspan="2">
+            <canvas id="juliaImage"  style="border: 1px solid black"></canvas></td></tr>
     </table>
-    <canvas id="mandelImage" width="800" height="450" style="border: 1px solid black"></canvas>
   </section>
 <script type="module">
 import {
@@ -46,64 +53,193 @@ import {
 const TEST_MODE   = false
 const SHOW_DETAIL = false
 
-const WASM_PAGE_SIZE = 65536
+const WASM_PAGE_SIZE = 1024 * 64
 
-const DEFAULT_PPU       = 8300             // Default pixels per unit (controls zoom level)
-const DEFAULT_ORIGIN_X  = -0.65            // Centre X canvas pixel in the Mandelbrot coordinate space
-const DEFAULT_ORIGIN_Y  = -0.35            // Centre Y canvas pixel in the Mandelbort coordinate space
-const DEFAULT_MAX_ITERS = 650              // Default number of iterations for the escape time algorithm
-
-function $id(elId) { return document.getElementById(elId) }
+const DEFAULT_CANVAS_WIDTH  = 800
+const DEFAULT_CANVAS_HEIGHT = 450
+const DEFAULT_PPU           = 200              // Default pixels per unit (controls zoom level)
+const DEFAULT_ORIGIN_X      = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
+const DEFAULT_ORIGIN_Y      = 0                // Centre Y canvas pixel in the Mandelbort coordinate space
+const DEFAULT_MAX_ITERS     = 150              // Default number of iterations for the escape time algorithm
 
 const toMilliTenths = val => Math.round(val * 10000) / 10000
+function $id(el) { return document.getElementById(el) }
 
-const mCanvas     = $id('mandelImage')
+// ---------------------------------------------------------------------------------------------------------------------
+let sliders = {
+  'zoom' :      { currentValue : DEFAULT_PPU,       defaultValue : DEFAULT_PPU,       asInt : true },
+  'max_iters' : { currentValue : DEFAULT_MAX_ITERS, defaultValue : DEFAULT_MAX_ITERS, asInt : true },
+  'origin_x' :  { currentValue : DEFAULT_ORIGIN_X,  defaultValue : DEFAULT_ORIGIN_X,  asInt : false },
+  'origin_y' :  { currentValue : DEFAULT_ORIGIN_Y,  defaultValue : DEFAULT_ORIGIN_Y,  asInt : false },
+}
+
+const reset_slider = sId => {
+  let slider_obj = sliders[sId]
+  let ui_slider = $id(sId)
+
+  ui_slider.addEventListener("input", update_img, false)
+  ui_slider.value = slider_obj.defaultValue
+
+  slider_obj.currentValue = slider_obj.defaultValue
+  $id(`${sId}_txt`).innerHTML = slider_obj.defaultValue
+
+  return slider_obj
+}
+
+const update_slider = sId => {
+  let slider_obj = sliders[sId]
+
+  slider_obj.currentValue = slider_obj.asInt ? parseInt($id(sId).value) : parseFloat($id(sId).value)
+  $id(`${sId}_txt`).innerHTML = slider_obj.currentValue
+
+  return slider_obj
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Canvas and memory allocation
+const mCanvas  = $id('mandelImage')
+mCanvas.width  = DEFAULT_CANVAS_WIDTH
+mCanvas.height = DEFAULT_CANVAS_HEIGHT
+
 const mContext    = mCanvas.getContext('2d')
 const mImage      = mContext.createImageData(mCanvas.width, mCanvas.height)
 const mImageSize  = mCanvas.width * mCanvas.height * 4
 const mImagePages = Math.ceil(mImageSize / WASM_PAGE_SIZE)
 
+const jCanvas  = $id('juliaImage')
+jCanvas.width  = DEFAULT_CANVAS_WIDTH
+jCanvas.height = DEFAULT_CANVAS_HEIGHT
+
+const jContext    = jCanvas.getContext('2d')
+const jImage      = jContext.createImageData(jCanvas.width, jCanvas.height)
+const jImageSize  = jCanvas.width * jCanvas.height * 4
+const jImagePages = Math.ceil(jImageSize / WASM_PAGE_SIZE)
+const jImageStart = mImagePages * WASM_PAGE_SIZE
+const jImageEnd   = jImageStart + jImageSize
+
 // Arbitrarily allocate 4 pages for the colour palette.
-// This allows for images to be calculated with a maximum iteration value up to 32768
+// This allows for enough colours for an image to be calculated with a maximum iteration value of 32768
 const palettePages = 4
 
+const wasmMemory  = new WebAssembly.Memory({ initial : mImagePages + jImagePages + palettePages })
+const wasmMemBuff = new Uint8ClampedArray(wasmMemory.buffer)
+
+const import_object = {
+  math : Math,
+  js : {
+    shared_mem        : wasmMemory,
+    mandel_img_offset : 0,
+    julia_img_offset  : WASM_PAGE_SIZE * mImagePages,
+    palette_offset    : WASM_PAGE_SIZE * (mImagePages + jImagePages),
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Mouse handler functions
+
 // Translate the mouse X or Y canvas position to the corresponding X or Y coordinate in the complex plain
-const mouseAxisToCoordAxis = (cnvsDim, ppu, origin) => mousePos => origin + ((mousePos - (cnvsDim / 2)) / ppu)
+const canvas_pxl_to_coord = (cnvsDim, ppu, origin) => mousePos => origin + ((mousePos - (cnvsDim / 2)) / ppu)
 
-window.mandelXToCoordXFn = mouseAxisToCoordAxis(mCanvas.width,  DEFAULT_PPU, DEFAULT_ORIGIN_X)
-window.mandelYToCoordYFn = mouseAxisToCoordAxis(mCanvas.height, DEFAULT_PPU, DEFAULT_ORIGIN_Y)
-
-const offsetToClampedPos = (offset, dim, offsetDim) =>
-  (pos => pos < 0 ? 0 : pos > dim ? dim : pos)
-  (offset - ((offsetDim - dim) / 2))
-
-const mousePositionOnCanvas = e => ({
-  "x_pos" : offsetToClampedPos(e.offsetX, e.target.width,  e.target.offsetWidth),
-  "y_pos" : offsetToClampedPos(e.offsetY, e.target.height, e.target.offsetHeight)
-})
+// Return a value clamped to the magnitude of the canvas image dimension that accountd for the canvas border width
+const offset_to_clamped_pos = (offset, dim, offsetDim) => {
+  let pos = offset - ((offsetDim - dim) / 2)
+  return pos < 0 ? 0 : pos > dim ? dim : pos
+}
 
 // Track mouse pointer position in the Mandelbrot set
-const mouseTrack =
-  evt => {
-    let canvasCoords = mousePositionOnCanvas(evt)
+const mouse_track = evt => {
+  let x_pxl = offset_to_clamped_pos(evt.offsetX, evt.target.width,  evt.target.offsetWidth)
+  let y_pxl = offset_to_clamped_pos(evt.offsetY, evt.target.height, evt.target.offsetHeight)
 
-    $id('xCanvasCoord').innerHTML = canvasCoords.x_pos
-    $id('yCanvasCoord').innerHTML = canvasCoords.y_pos
-    $id('xComplexCoord').innerHTML = window.mandelXToCoordXFn(canvasCoords.x_pos)
-    $id('yComplexCoord').innerHTML = window.mandelYToCoordYFn(canvasCoords.y_pos) * -1
+  $id('x_canvas_pos').innerHTML = x_pxl
+  $id('y_canvas_pos').innerHTML = y_pxl
+  $id('x_complex_coord').innerHTML = window.mandel_x_pos_to_coord(x_pxl)
+  $id('y_complex_coord').innerHTML = window.mandel_y_pos_to_coord(y_pxl) * -1
+
+  draw_julia_set(x_pxl, y_pxl)
+}
+
+mCanvas.addEventListener('mousemove', mouse_track, false)
+
+// ---------------------------------------------------------------------------------------------------------------------
+const draw_mandelbrot_set = (x, y, zoom, iters) => {
+  let then = window.performance.now()
+  window.mandel_plot(mCanvas.width, mCanvas.height, x, y, zoom, iters)
+  $id("mandel_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
+
+  mImage.data.set(wasmMemBuff.slice(0, mImageSize))
+  mContext.putImageData(mImage,0,0)
+}
+
+const draw_julia_set = (x, y) => {
+  let ox    = $id('origin_x').value * 1
+  let oy    = $id('origin_y').value * 1
+  let zoom  = $id("zoom").value
+  let iters = $id("max_iters").value
+
+  let then = window.performance.now()
+  window.julia_plot(jCanvas.width, jCanvas.height, ox, oy, x, y, zoom, iters)
+  $id("julia_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
+
+  jImage.data.set(wasmMemBuff.slice(jImageStart, jImageEnd))
+  jContext.putImageData(jImage,0,0)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+const update_img = evt => {
+  sliders = Object
+    .keys(sliders)
+    .reduce((acc, sId) => { acc[sId] = update_slider(sId); return acc }, {})
+
+  switch(evt.target.id) {
+    case "max_iters":
+      // Update the colour palette
+      window.hsl_to_rgb(sliders.max_iters.currentValue)
+      break
+
+    // Update the pixel to coordinate translation functions
+    case "zoom":
+    case "origin_x":
+    case "origin_y":
+      window.mandel_x_pos_to_coord = canvas_pxl_to_coord(
+        mCanvas.width,
+        sliders.zoom.currentValue,
+        sliders.origin_x.currentValue
+      )
+      window.mandel_y_pos_to_coord = canvas_pxl_to_coord(
+        mCanvas.height,
+        sliders.zoom.currentValue,
+        sliders.origin_y.currentValue
+      )
+      break
+
+    default:
   }
 
-mCanvas.addEventListener('mousemove', mouseTrack, false)
+  draw_mandelbrot_set(
+    sliders.origin_x.currentValue,
+    sliders.origin_y.currentValue,
+    sliders.zoom.currentValue,
+    sliders.max_iters.currentValue
+  )
+}
 
-const drawMandelbrotSet =
-  (w, h, x, y, z, i) => {
-    let then = window.performance.now()
-    window.mandel_plot(w, h, x, y, z, i)
-    $id("wasm_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
+const resetUI = () => {
+  window.mandel_x_pos_to_coord = canvas_pxl_to_coord(mCanvas.width,  DEFAULT_PPU, DEFAULT_ORIGIN_X)
+  window.mandel_y_pos_to_coord = canvas_pxl_to_coord(mCanvas.height, DEFAULT_PPU, DEFAULT_ORIGIN_Y)
 
-    mImage.data.set(wasmMemBuff.slice(0, w * h * 4))
-    mContext.putImageData(mImage,0,0)
-  }
+  sliders = Object.keys(sliders).reduce((acc, sId) => { acc[sId] = reset_slider(sId); return acc }, {})
+
+  // Generate default colour palette
+  window.hsl_to_rgb(DEFAULT_MAX_ITERS)
+
+  draw_mandelbrot_set(
+    DEFAULT_ORIGIN_X,
+    DEFAULT_ORIGIN_Y,
+    DEFAULT_PPU,
+    DEFAULT_MAX_ITERS,
+  )
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
@@ -115,104 +251,7 @@ const instantiationSequence = [
   new WasmModule('./build/canvas.wasm',         'canvas'),
 ]
 
-const wasmMemory  = new WebAssembly.Memory({ initial : mImagePages + palettePages })
-const wasmMemBuff = new Uint8ClampedArray(wasmMemory.buffer)
-
-function update_img(evt) {
-  switch(evt.target.id) {
-    case "origin_x":
-      document.getElementById('origin_x_value').value = evt.target.value
-
-      drawMandelbrotSet(
-        mCanvas.width,
-        mCanvas.height,
-        evt.target.value,
-        $id('origin_y').value,
-        $id('zoom').value,
-        $id('max_iters').value,
-      )
-      break
-
-    case "origin_y":
-      document.getElementById('origin_y_value').value = evt.target.value
-
-      drawMandelbrotSet(
-        mCanvas.width,
-        mCanvas.height,
-        $id('origin_x').value,
-        evt.target.value,
-        $id('zoom').value,
-        $id('max_iters').value,
-      )
-      break
-
-    case "zoom":
-      document.getElementById('zoom_value').value = evt.target.value
-
-      drawMandelbrotSet(
-        mCanvas.width,
-        mCanvas.height,
-        $id('origin_x').value,
-        $id('origin_y').value,
-        evt.target.value,
-        $id('max_iters').value,
-      )
-      break
-
-    case "max_iters":
-      document.getElementById('max_iters_value').value = evt.target.value
-
-      // Update the colour palette
-      window.hsl_to_rgb(evt.target.value)
-
-      drawMandelbrotSet(
-        mCanvas.width,
-        mCanvas.height,
-        $id('origin_x').value,
-        $id('origin_y').value,
-        $id('zoom').value,
-        evt.target.value,
-      )
-      break
-
-    default:
-  }
-}
-
-function resetUI() {
-  let zoom_slider      = $id("zoom")
-  let max_iters_slider = $id("max_iters")
-  let origin_x_slider  = $id("origin_x")
-  let origin_y_slider  = $id("origin_y")
-
-  zoom_slider.addEventListener("input", update_img, false)
-  max_iters_slider.addEventListener("input", update_img, false)
-  origin_x_slider.addEventListener("input", update_img, false)
-  origin_y_slider.addEventListener("input", update_img, false)
-
-  $id('zoom').value = DEFAULT_PPU
-  $id('zoom_value').value = DEFAULT_PPU
-
-  $id('max_iters').value = DEFAULT_MAX_ITERS
-  $id('max_iters_value').value = DEFAULT_MAX_ITERS
-
-  $id('origin_x').value = DEFAULT_ORIGIN_X
-  $id('origin_x_value').value = DEFAULT_ORIGIN_X
-
-  $id('origin_y').value = DEFAULT_ORIGIN_Y
-  $id('origin_y_value').value = DEFAULT_ORIGIN_Y
-}
-
-const importObject = {
-  math : Math,
-  js : {
-    shared_mem : wasmMemory,
-    img_offset : 0,
-    palette_offset : mImagePages * WASM_PAGE_SIZE,
-  }
-}
-
-instantiateWasmModuleSequence(instantiationSequence, importObject)
+instantiateWasmModuleSequence(instantiationSequence, import_object)
   .then(wasmModules => {
     // testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
     // testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
@@ -220,22 +259,12 @@ instantiateWasmModuleSequence(instantiationSequence, importObject)
     // showHostFns(wasmModules.hostFunctions)
 
     window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
+    window.julia_plot  = wasmModules.canvas.instance.exports.julia_plot
     window.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
 
+    $id("reset_ui_button").addEventListener("click", resetUI, false)
+
     resetUI()
-
-    // Generate the colour palette
-    window.hsl_to_rgb(DEFAULT_MAX_ITERS)
-
-      // Draw the Mandelbrot set at default location and zoom level
-    drawMandelbrotSet(
-      mCanvas.width,
-      mCanvas.height,
-      DEFAULT_ORIGIN_X,
-      DEFAULT_ORIGIN_Y,
-      DEFAULT_PPU,
-      DEFAULT_MAX_ITERS,
-    )
   })
 </script>
 </body>

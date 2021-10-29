@@ -1,9 +1,4 @@
 (module
-  ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Import complex functions
-  ;; (import "cplx" "sum_of_sqrs"  (func $sum_of_sqrs  (param f64 f64) (result f64)))
-  ;; (import "cplx" "diff_of_sqrs" (func $diff_of_sqrs (param f64 f64) (result f64)))
-
   (global $BAILOUT f64 (f64.const 4.0))
 
   ;; -------------------------------------------------------------------------------------------------------------------
@@ -99,18 +94,16 @@
   ;; Escape time algorithm for calculating either the Mandelbrot or Julia sets
   (func $escape_time_mj
         (export "escape_time_mj")
-        (param $x       f64)
-        (param $y       f64)
-        (param $start_x f64)
-        (param $start_y f64)
+        (param $mandel_x  f64)
+        (param $mandel_y  f64)
+        (param $x         f64)
+        (param $y         f64)
         (param $max_iters i32)
         (result i32)
 
-    (local $iter_count i32)
+    (local $iters i32)
     (local $new_x f64)
     (local $new_y f64)
-
-    (local.set $iter_count (i32.const 0))
 
     (loop $repeat
       (block $quit
@@ -118,31 +111,38 @@
         (br_if $quit
           (i32.or
               (f64.gt
-                (call $sum_of_sqrs (local.get $start_x) (local.get $start_y))
+                (call $sum_of_sqrs (local.get $x) (local.get $y))
                 (global.get $BAILOUT)
               )
-              (i32.ge_u (local.get $iter_count) (local.get $max_iters))
+              (i32.ge_u (local.get $iters) (local.get $max_iters))
           )
         )
 
-        (local.set $new_x (f64.add (local.get $x) (call $diff_of_sqrs (local.get $start_x) (local.get $start_y))))
-        (local.set $new_y (f64.add (local.get $y)
-                                   (f64.mul (f64.const 2.0) (f64.mul (local.get $start_x) (local.get $start_y)))))
-        (local.set $start_x (local.get $new_x))
-        (local.set $start_y (local.get $new_y))
-        (local.set $iter_count (call $incr_i64 (local.get $iter_count)))
+        (local.set
+          $new_x
+          (f64.add (local.get $mandel_x) (call $diff_of_sqrs (local.get $x) (local.get $y)))
+        )
+        (local.set
+          $new_y
+          (f64.add (local.get $mandel_y)
+                   (f64.mul (f64.const 2.0) (f64.mul (local.get $x) (local.get $y)))
+          )
+        )
+        (local.set $x     (local.get $new_x))
+        (local.set $y     (local.get $new_y))
+        (local.set $iters (call $incr_i64 (local.get $iters)))
 
         br $repeat
       )
     )
 
-    (local.get $iter_count)
+    (local.get $iters)
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Calculate one pixel of the Mandelbrot set
-  (func $gen_pixel_val
-        (export "gen_pixel_val")
+  (func $gen_mandel_pixel
+        (export "gen_mandel_pixel")
         (param $x f64)
         (param $y f64)
         (param $max_iters i32)

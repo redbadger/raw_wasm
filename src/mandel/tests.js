@@ -96,7 +96,7 @@ test04.setTestList([
  * Iterate one point on the Mandelbrot set that may or may not be within one of the early bailout areas
  */
 const test05 = new WasmFunctionTest(
-  "gen_pixel_val",
+  "gen_mandel_pixel",
   TWO_F64_ONE_I32_IN_ONE_I32_OUT,
   "Return the iteration count of one pixel on the Mandelbrot set"
 )
