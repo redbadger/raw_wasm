@@ -87,7 +87,7 @@
         (param $height i32)         ;; Canvas height
         (param $origin_x f32)       ;; X origin location
         (param $origin_y f32)       ;; Y origin location
-        (param $j_ppu i32)            ;; Pixels per unit (zoom level)
+        (param $j_ppu i32)          ;; Pixels per unit (zoom level)
         (param $max_iters i32)      ;; Maximum iteration count
     (local $x_pos i32)
     (local $y_pos i32)

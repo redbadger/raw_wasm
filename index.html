@@ -11,15 +11,15 @@ input[type="range"].horizontal {
 <body>
   <section id="plotArea">
     <table>
-      <tr><td>Maximum iterations</td>
-          <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
-          <td><span id="max_iters_txt"></span></td></tr>
-      <tr><td>Zoom</td>
-          <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
-          <td><span id="zoom_txt"></span></td></tr>
-      <tr><td>X origin</td>
-        <td><input class="horizontal" id="origin_x" type="range" min="-2" max="2" step="0.01" value="-0.5"></td>
-        <td><span id="origin_x_txt"></span></td></tr>
+    <tr><td>Maximum iterations</td>
+        <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
+        <td><span id="max_iters_txt"></span></td></tr>
+    <tr><td>Zoom</td>
+        <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
+        <td><span id="zoom_txt"></span></td></tr>
+    <tr><td>X origin</td>
+      <td><input class="horizontal" id="origin_x" type="range" min="-2" max="2" step="0.01" value="-0.5"></td>
+      <td><span id="origin_x_txt"></span></td></tr>
     <tr><td>Y origin</td>
         <td><input class="horizontal" id="origin_y" type="range" min="-2" max="2" step="0.01" value="0"></td>
         <td><span id="origin_y_txt"></span></td></tr>
@@ -57,6 +57,7 @@ const WASM_PAGE_SIZE = 1024 * 64
 const DEFAULT_CANVAS_WIDTH  = 800
 const DEFAULT_CANVAS_HEIGHT = 450
 const DEFAULT_PPU           = 200              // Default pixels per unit (controls zoom level)
+const DEFAULT_ORIGIN_STEP   = 0.01             // Slider step interval when the origin is moved
 const DEFAULT_ORIGIN_X      = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
 const DEFAULT_ORIGIN_Y      = 0                // Centre Y canvas pixel in the Mandelbort coordinate space
 const DEFAULT_MAX_ITERS     = 150              // Default number of iterations for the escape time algorithm
@@ -64,8 +65,21 @@ const DEFAULT_MAX_ITERS     = 150              // Default number of iterations f
 const toMilliTenths = val => Math.round(val * 10000) / 10000
 function $id(el) { return document.getElementById(el) }
 
+function Fractal(name, canvas) {
+  this.name      =  name
+  this.canvas    = canvas
+  this.origin_x  = DEFAULT_ORIGIN_X
+  this.origin_y  = DEFAULT_ORIGIN_Y
+  this.mandel_x  = 0
+  this.mandel_y  = 0
+  this.zoom      = DEFAULT_PPU
+  this.max_iters = DEFAULT_MAX_ITERS
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Manage sliders
+let drag_active = false
+
 let sliders = {
   'zoom' :      { currentValue : DEFAULT_PPU,       defaultValue : DEFAULT_PPU,       asInt : true },
   'max_iters' : { currentValue : DEFAULT_MAX_ITERS, defaultValue : DEFAULT_MAX_ITERS, asInt : true },
@@ -148,6 +162,9 @@ const offset_to_clamped_pos = (offset, dim, offsetDim) => {
 
 // Track mouse pointer position in the Mandelbrot set
 const mouse_track = evt => {
+  let ox = $id("origin_x").value * 1
+  let oy = $id("origin_y").value * 1
+
   let x_pxl = offset_to_clamped_pos(evt.offsetX, evt.target.width,  evt.target.offsetWidth)
   let y_pxl = offset_to_clamped_pos(evt.offsetY, evt.target.height, evt.target.offsetHeight)
 
@@ -156,29 +173,36 @@ const mouse_track = evt => {
   $id('x_complex_coord').innerHTML = window.mandel_x_pos_to_coord(x_pxl)
   $id('y_complex_coord').innerHTML = window.mandel_y_pos_to_coord(y_pxl) * -1
 
-  draw_julia_set(x_pxl, y_pxl)
+  if (drag_active) {
+    $id("origin_x").value = ox - evt.movementX * DEFAULT_ORIGIN_STEP
+    $id("origin_y").value = oy - evt.movementY * DEFAULT_ORIGIN_STEP
+
+    update_img(evt)
+  } else
+    draw_julia_set(ox, oy, x_pxl, y_pxl, $id("zoom").value, $id("max_iters").value)
 }
 
+// Mouse up and down events within the Mandelbrot set
+const mouse_down = _ => drag_active = true
+const mouse_up   = _ => drag_active = false
+
 mCanvas.addEventListener('mousemove', mouse_track, false)
+mCanvas.addEventListener('mousedown', mouse_down, false)
+mCanvas.addEventListener('mouseup',   mouse_up, false)
 
 // ---------------------------------------------------------------------------------------------------------------------
-const draw_mandelbrot_set = (x, y, zoom, iters) => {
+const draw_mandelbrot_set = (x_coord, y_coord, zoom, iters) => {
   let then = window.performance.now()
-  window.mandel_plot(mCanvas.width, mCanvas.height, x, y, zoom, iters)
+  window.mandel_plot(mCanvas.width, mCanvas.height, x_coord, y_coord, zoom, iters)
   $id("mandel_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
 
   mImage.data.set(wasmMemBuff.slice(0, mImageSize))
   mContext.putImageData(mImage,0,0)
 }
 
-const draw_julia_set = (x, y) => {
-  let ox    = $id('origin_x').value * 1
-  let oy    = $id('origin_y').value * 1
-  let zoom  = $id("zoom").value
-  let iters = $id("max_iters").value
-
+const draw_julia_set = (ox, oy, x_pxl, y_pxl, zoom, iters) => {
   let then = window.performance.now()
-  window.julia_plot(jCanvas.width, jCanvas.height, ox, oy, x, y, zoom, iters)
+  window.julia_plot(jCanvas.width, jCanvas.height, ox, oy, x_pxl, y_pxl, zoom, iters)
   $id("julia_exec_time").innerHTML = `${toMilliTenths(window.performance.now() - then)}`
 
   jImage.data.set(wasmMemBuff.slice(jImageStart, jImageEnd))
@@ -201,6 +225,7 @@ const update_img = evt => {
     case "zoom":
     case "origin_x":
     case "origin_y":
+    case "mandelImage":
       window.mandel_x_pos_to_coord = canvas_pxl_to_coord(
         mCanvas.width,
         sliders.zoom.currentValue,
@@ -263,6 +288,9 @@ instantiateWasmModuleSequence(instantiationSequence, import_object)
     window.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
 
     $id("reset_ui_button").addEventListener("click", resetUI, false)
+
+    $id("origin_x").step = DEFAULT_ORIGIN_STEP
+    $id("origin_y").step = DEFAULT_ORIGIN_STEP
 
     resetUI()
   })
