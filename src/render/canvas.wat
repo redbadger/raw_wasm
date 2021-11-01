@@ -85,16 +85,14 @@
         (export "mandel_plot")
         (param $width i32)          ;; Canvas width
         (param $height i32)         ;; Canvas height
-        (param $origin_x f32)       ;; X origin location
-        (param $origin_y f32)       ;; Y origin location
+        (param $origin_x f64)       ;; X origin location
+        (param $origin_y f64)       ;; Y origin location
         (param $j_ppu i32)          ;; Pixels per unit (zoom level)
         (param $max_iters i32)      ;; Maximum iteration count
     (local $x_pos i32)
     (local $y_pos i32)
     (local $x_coord f64)
     (local $y_coord f64)
-    (local $origin_x_f64 f64)
-    (local $origin_y_f64 f64)
     (local $pixel_offset i32)
     (local $pixel_val i32)
     (local $pixel_colour i32)
@@ -103,9 +101,6 @@
     (local.set $y_pos (i32.const 0))
     (local.set $pixel_offset (global.get $mandel_img_offset))
 
-    (local.set $origin_x_f64 (f64.promote_f32 (local.get $origin_x)))
-    (local.set $origin_y_f64 (f64.promote_f32 (local.get $origin_y)))
-
     (loop $rows
       (block $exit_rows
         ;; Have all the rows been plotted?
@@ -113,7 +108,7 @@
 
         ;; Translate y position to y coordinate
         (local.set $y_coord
-          (call $pxl_to_coord_with_offset (local.get $y_pos) (local.get $height) (local.get $origin_y_f64) (local.get $j_ppu))
+          (call $pxl_to_coord_with_offset (local.get $y_pos) (local.get $height) (local.get $origin_y) (local.get $j_ppu))
         )
 
         (loop $cols
@@ -123,7 +118,7 @@
 
             ;; Translate x position to x coordinate
             (local.set $x_coord
-              (call $pxl_to_coord_with_offset (local.get $x_pos) (local.get $width) (local.get $origin_x_f64) (local.get $j_ppu))
+              (call $pxl_to_coord_with_offset (local.get $x_pos) (local.get $width) (local.get $origin_x) (local.get $j_ppu))
             )
 
             ;; Calculate the current pixel's iteration value
@@ -160,8 +155,8 @@
         (export "julia_plot")
         (param $width i32)
         (param $height i32)
-        (param $origin_x f32)  ;; X origin coordinate
-        (param $origin_y f32)  ;; Y origin coordinate
+        (param $origin_x f64)  ;; X origin coordinate
+        (param $origin_y f64)  ;; Y origin coordinate
         (param $mandel_x i32)  ;; X mouse position in Mandelbrot Set
         (param $mandel_y i32)  ;; Y mouse position in Mandelbrot Set
         (param $m_ppu i32)     ;; Zoom level of Mandelbrot set image (pixels per unit)
@@ -188,7 +183,7 @@
       (call $pxl_to_coord_with_offset
         (local.get $mandel_x)
         (local.get $width)
-        (f64.promote_f32 (local.get $origin_x))
+        (local.get $origin_x)
         (local.get $m_ppu)
       )
     )
@@ -198,7 +193,7 @@
         (call $pxl_to_coord_with_offset
           (local.get $mandel_y)
           (local.get $height)
-          (f64.promote_f32 (local.get $origin_y))
+          (local.get $origin_y)
           (local.get $m_ppu)
         )
       )
