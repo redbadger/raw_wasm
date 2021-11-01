@@ -14,7 +14,7 @@ By writing the numerically intensive part of this application directly in WAT, I
 However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
 
 It should also be pointed out that just because a binary file is small does not means that it runs quickly.
-On the one hand, the fewer the number instructions needed to perform a task, the faster that task can be accomplished; however, certain WAT instructions should be either avoided altogether or used as infrequently as possible because they are expensive.
+On the one hand, the fewer the number instructions needed to perform a task, the faster that task can be accomplished; on the other hand, certain WAT instructions are convenient but expensive and should therefore be used sparingly.
 
 For example, the instruction `f64.promote_f32` offers a convenient way to promote a 32-bit floating point value to a 64-bit floating point value.
 However, using this instruction inside a loop executed 360,000 times doubled the execution time of that loop...
@@ -46,6 +46,8 @@ The instantiation process allows each subsequent module to import (if necessary)
 
 As you move the mouse pointer over the image of the Mandebrot Set, the Julia Set corresponding to the mouse pointer's position in the complex plane is then plotted.
 
+You can drag the Mandelbrot set image to reposition it.
+
 By moving the sliders, you can change the following parameters of the Mandelbrot Set:
 
 * ***Maximum Iterations***  
@@ -56,13 +58,6 @@ By moving the sliders, you can change the following parameters of the Mandelbrot
 
 * ***Zoom level***  
    The zoom level shows the number of pixels per unit on the complex plane
-
-* ***X Origin*** and ***Y Origin***  
-   Consider that the Mandelbrot Set canvas is a viewport looking onto some region of the complex plane.
-   The centre of the Julia Set canvas is fixed at `(0,0)`, but the centre of the Mandelbrot Set canvas can be shifted.
-   In order to render the Mandelbrot Set in the centre of the canvas, the X and Y origin values are set to `(-0.5, 0)`.
-   As you zoom in, shift the image around to maintain areas of interest within this viewport.
-
 
 ## Local Execution
 
