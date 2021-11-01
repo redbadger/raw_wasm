@@ -99,21 +99,39 @@ const mouse_track = evt => {
 }
 
 // Mouse up and down events within the Mandelbrot set
-const mouse_down        = _ => drag_active = true
-const mouse_up          = _ => drag_active = false
-const mouse_left_click  = _ => {
-  let zoom_slider = $id("zoom")
+const mouse_down  = _ => drag_active = true
+const mouse_up    = _ => drag_active = false
 
-  if (zoom_slider.value + DEFAULT_ZOOM_STEP <= zoom_slider.max) {
-    img_params.zoom.currentValue += DEFAULT_ZOOM_STEP
-    mandelbrot.zoom += DEFAULT_ZOOM_STEP
+const mouse_left_click = evt => {
+  if (!drag_active) {
+    let zoom_slider = $id("zoom")
+    let max = parseInt(zoom_slider.max)
+    let val = parseInt(zoom_slider.value)
+    let min = parseInt(zoom_slider.min)
+
+    if (val + DEFAULT_ZOOM_STEP <= max) {
+      img_params.zoom.currentValue += DEFAULT_ZOOM_STEP
+      mandelbrot.zoom += img_params.zoom.currentValue
+      draw_fractal(mandelbrot)
+    }
   }
 }
-const mouse_right_click = _ => {
-  let zoom_slider = $id("zoom")
 
-  if (zoom_slider.value - DEFAULT_ZOOM_STEP >= zoom_slider.min)
-    mandelbrot.zoom -= DEFAULT_ZOOM_STEP
+const mouse_right_click = evt => {
+  if (!drag_active) {
+    let zoom_slider = $id("zoom")
+    let max = parseInt(zoom_slider.max)
+    let val = parseInt(zoom_slider.value)
+    let min = parseInt(zoom_slider.min)
+
+    if (val - DEFAULT_ZOOM_STEP >= min) {
+      img_params.zoom.currentValue -= DEFAULT_ZOOM_STEP
+      mandelbrot.zoom -= img_params.zoom.currentValue
+      draw_fractal(mandelbrot)
+    }
+  }
+
+  return false
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -138,9 +156,12 @@ const mCanvas  = $id('mandelImage')
 mCanvas.width  = DEFAULT_CANVAS_WIDTH
 mCanvas.height = DEFAULT_CANVAS_HEIGHT
 
-mCanvas.addEventListener('mousemove', mouse_track, false)
-mCanvas.addEventListener('mousedown', mouse_down, false)
-mCanvas.addEventListener('mouseup',   mouse_up, false)
+mCanvas.addEventListener('mousemove',   mouse_track, false)
+mCanvas.addEventListener('mousedown',   mouse_down, false)
+mCanvas.addEventListener('mouseup',     mouse_up, false)
+mCanvas.addEventListener('mouseout',    mouse_up, false)
+// mCanvas.addEventListener('click',       mouse_left_click, false)
+// mCanvas.addEventListener('contextmenu', mouse_right_click, false)
 
 const mContext    = mCanvas.getContext('2d')
 const mImage      = mContext.createImageData(mCanvas.width, mCanvas.height)
@@ -200,10 +221,7 @@ const reset_img_params = sId => {
 
   // Reset slider value
   if (param_obj.hasSlider) {
-    let ui_slider = $id(sId)
-
-    ui_slider.value = param_obj.defaultValue
-
+    $id(sId).value = param_obj.defaultValue
     $id(`${sId}_txt`).innerHTML = param_obj.defaultValue
   }
 
