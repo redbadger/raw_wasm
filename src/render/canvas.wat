@@ -87,7 +87,7 @@
         (param $height i32)         ;; Canvas height
         (param $origin_x f64)       ;; X origin location
         (param $origin_y f64)       ;; Y origin location
-        (param $j_ppu i32)          ;; Pixels per unit (zoom level)
+        (param $ppu i32)            ;; Pixels per unit (zoom level)
         (param $max_iters i32)      ;; Maximum iteration count
     (local $x_pos i32)
     (local $y_pos i32)
@@ -108,7 +108,7 @@
 
         ;; Translate y position to y coordinate
         (local.set $y_coord
-          (call $pxl_to_coord_with_offset (local.get $y_pos) (local.get $height) (local.get $origin_y) (local.get $j_ppu))
+          (call $pxl_to_coord_with_offset (local.get $y_pos) (local.get $height) (local.get $origin_y) (local.get $ppu))
         )
 
         (loop $cols
@@ -118,7 +118,7 @@
 
             ;; Translate x position to x coordinate
             (local.set $x_coord
-              (call $pxl_to_coord_with_offset (local.get $x_pos) (local.get $width) (local.get $origin_x) (local.get $j_ppu))
+              (call $pxl_to_coord_with_offset (local.get $x_pos) (local.get $width) (local.get $origin_x) (local.get $ppu))
             )
 
             ;; Calculate the current pixel's iteration value
@@ -159,7 +159,7 @@
         (param $origin_y f64)  ;; Y origin coordinate
         (param $mandel_x i32)  ;; X mouse position in Mandelbrot Set
         (param $mandel_y i32)  ;; Y mouse position in Mandelbrot Set
-        (param $m_ppu i32)     ;; Zoom level of Mandelbrot set image (pixels per unit)
+        (param $ppu i32)       ;; Zoom level of Mandelbrot set image (pixels per unit)
         (param $max_iters i32)
     (local $x_pos i32)         ;; Iteration counter
     (local $y_pos i32)         ;; Iteration counter
@@ -184,7 +184,7 @@
         (local.get $mandel_x)
         (local.get $width)
         (local.get $origin_x)
-        (local.get $m_ppu)
+        (local.get $ppu)
       )
     )
     (local.set $mandel_y_f64
@@ -194,7 +194,7 @@
           (local.get $mandel_y)
           (local.get $height)
           (local.get $origin_y)
-          (local.get $m_ppu)
+          (local.get $ppu)
         )
       )
     )

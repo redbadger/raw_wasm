@@ -10,7 +10,7 @@ The purpose of learning to write in raw WebAssembly Text (WAT) is to achieve the
 Some would argue that neither of these tasks need to be performed by humans because modern compilers are efficient enough to relieve us of this particular workload.
 Well, maybe &mdash; but not really.
 
-By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.5 Kb (and further size reductions are still possible).
+By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.5 Kb.
 However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
 
 It should also be pointed out that just because a binary file is small does not means that it runs quickly.

@@ -151,9 +151,9 @@
     (local $return_val i32)
     (local.set $return_val (local.get $max_iters))
 
-    (block $exit_calc
+    (block $bail_out_early
       ;; Can we avoid running the escape time calculation?
-      (br_if $exit_calc (call $mandel_early_bailout (local.get $x) (local.get $y)))
+      (br_if $bail_out_early (call $mandel_early_bailout (local.get $x) (local.get $y)))
 
       (local.set
         $return_val
