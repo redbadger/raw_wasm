@@ -12,13 +12,14 @@ input[type="range"].horizontal {
   <section id="plotArea">
     <table>
     <tr><td>Maximum iterations</td>
-        <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" step="50" value="1000"></td>
+        <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" value="1000"></td>
         <td><span id="max_iters_txt"></span></td></tr>
     <tr><td>Zoom</td>
-        <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" step="50" value="200"></td>
+        <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" value="200"></td>
         <td><span id="zoom_txt"></span></td></tr>
-    <tr><td><input id="reset_ui_button" type="button" value="Reset all img_params"></td></tr>
+    <tr><td colspan="3" style="text-align: center;"><input id="reset_ui_button" type="button" value="Reset image"></td></tr>
     <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
+    <tr><td colspan="3">Drag to move, click to zoom in, right-click to zoom out</td></tr>
     <tr><td colspan="3">
             <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
     <tr><td colspan="3">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
@@ -50,10 +51,12 @@ const WASM_PAGE_SIZE = 1024 * 64
 const DEFAULT_CANVAS_WIDTH  = 800
 const DEFAULT_CANVAS_HEIGHT = 450
 const DEFAULT_PPU           = 200              // Default pixels per unit (controls zoom level)
+const DEFAULT_ZOOM_STEP     = 50               // Default slider step interval
 const DEFAULT_ORIGIN_STEP   = 0.01             // Slider step interval when the origin is moved
 const DEFAULT_ORIGIN_X      = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
 const DEFAULT_ORIGIN_Y      = 0                // Centre Y canvas pixel in the Mandelbort coordinate space
 const DEFAULT_MAX_ITERS     = 150              // Default number of iterations for the escape time algorithm
+const DEFAULT_ITERS_STEP    = 50               // Default slider step interval
 
 const toMilliTenths = val => Math.round(val * 10000) / 10000
 function $id(el) { return document.getElementById(el) }
@@ -79,8 +82,9 @@ const mouse_track = evt => {
   $id('y_complex_coord').innerHTML = window.mandel_y_pos_to_coord(y_pxl) * -1
 
   if (drag_active) {
-    img_params.origin_x.currentValue -= evt.movementX * DEFAULT_ORIGIN_STEP
-    img_params.origin_y.currentValue -= evt.movementY * DEFAULT_ORIGIN_STEP
+    let movement_factor = img_params.zoom.defaultValue / img_params.zoom.currentValue
+    img_params.origin_x.currentValue -= evt.movementX * DEFAULT_ORIGIN_STEP * movement_factor
+    img_params.origin_y.currentValue -= evt.movementY * DEFAULT_ORIGIN_STEP * movement_factor
 
     update_img(evt)
   } else {
@@ -95,8 +99,22 @@ const mouse_track = evt => {
 }
 
 // Mouse up and down events within the Mandelbrot set
-const mouse_down = _ => drag_active = true
-const mouse_up   = _ => drag_active = false
+const mouse_down        = _ => drag_active = true
+const mouse_up          = _ => drag_active = false
+const mouse_left_click  = _ => {
+  let zoom_slider = $id("zoom")
+
+  if (zoom_slider.value + DEFAULT_ZOOM_STEP <= zoom_slider.max) {
+    img_params.zoom.currentValue += DEFAULT_ZOOM_STEP
+    mandelbrot.zoom += DEFAULT_ZOOM_STEP
+  }
+}
+const mouse_right_click = _ => {
+  let zoom_slider = $id("zoom")
+
+  if (zoom_slider.value - DEFAULT_ZOOM_STEP >= zoom_slider.min)
+    mandelbrot.zoom -= DEFAULT_ZOOM_STEP
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 function Fractal(name, canvas, context, image, imgStart, imgEnd) {
@@ -174,6 +192,7 @@ let img_params = {
   'origin_y' :  { currentValue : DEFAULT_ORIGIN_Y,  defaultValue : DEFAULT_ORIGIN_Y,  hasSlider : false },
 }
 
+// Mapped over img_params
 const reset_img_params = sId => {
   let param_obj = img_params[sId]
 
@@ -183,7 +202,6 @@ const reset_img_params = sId => {
   if (param_obj.hasSlider) {
     let ui_slider = $id(sId)
 
-    ui_slider.addEventListener("input", update_img, false)
     ui_slider.value = param_obj.defaultValue
 
     $id(`${sId}_txt`).innerHTML = param_obj.defaultValue
@@ -192,6 +210,7 @@ const reset_img_params = sId => {
   return param_obj
 }
 
+// Mapped over img_params
 const update_img_params = sId => {
   let param_obj = img_params[sId]
 
@@ -308,6 +327,14 @@ instantiateWasmModuleSequence(instantiationSequence, import_object)
     window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
     window.julia_plot  = wasmModules.canvas.instance.exports.julia_plot
     window.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
+
+    let zoom_slider = $id("zoom")
+    zoom_slider.step = DEFAULT_ZOOM_STEP
+    zoom_slider.addEventListener("input", update_img, false)
+
+    let max_iters_slider = $id("max_iters")
+    max_iters_slider.step = DEFAULT_ITERS_STEP
+    max_iters_slider.addEventListener("input", update_img, false)
 
     $id("reset_ui_button").addEventListener("click", resetUI, false)
 
