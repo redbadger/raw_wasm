@@ -125,7 +125,7 @@
         (local.set
           $new_y
           (f64.add (local.get $mandel_y)
-                   (f64.mul (f64.const 2.0) (f64.mul (local.get $x) (local.get $y)))
+                   (f64.mul (local.get $y) (f64.add (local.get $x) (local.get $x)))
           )
         )
         (local.set $x     (local.get $new_x))
