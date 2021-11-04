@@ -35,9 +35,12 @@ input[type="range"].horizontal {
 // } from "./src/js/testUtils.js"
 
 import {
-  WasmModule,
-  instantiateWasmModuleSequence
+  WasmModule
 } from "./src/js/wasmUtils.js"
+
+import {
+  instantiateWasmModuleSequence
+} from "./src/js/wasmBrowserUtils.js"
 
 // import { complexTestMap } from "./src/complex/tests.js"
 // import { mandelTestMap }  from "./src/mandel/tests.js"
@@ -52,7 +55,7 @@ const DEFAULT_CANVAS_WIDTH  = 800
 const DEFAULT_CANVAS_HEIGHT = 450
 const DEFAULT_PPU           = 200              // Default pixels per unit (controls zoom level)
 const DEFAULT_ZOOM_STEP     = 50               // Default slider step interval
-const DEFAULT_ORIGIN_STEP   = 0.01             // Slider step interval when the origin is moved
+const DEFAULT_ORIGIN_STEP   = 0.01             // Step interval when Mandelbrot Set is dragged
 const DEFAULT_ORIGIN_X      = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
 const DEFAULT_ORIGIN_Y      = 0                // Centre Y canvas pixel in the Mandelbort coordinate space
 const DEFAULT_MAX_ITERS     = 150              // Default number of iterations for the escape time algorithm
@@ -102,38 +105,6 @@ const mouse_track = evt => {
 const mouse_down  = _ => drag_active = true
 const mouse_up    = _ => drag_active = false
 
-const mouse_left_click = evt => {
-  if (!drag_active) {
-    let zoom_slider = $id("zoom")
-    let max = parseInt(zoom_slider.max)
-    let val = parseInt(zoom_slider.value)
-    let min = parseInt(zoom_slider.min)
-
-    if (val + DEFAULT_ZOOM_STEP <= max) {
-      img_params.zoom.currentValue += DEFAULT_ZOOM_STEP
-      mandelbrot.zoom += img_params.zoom.currentValue
-      draw_fractal(mandelbrot)
-    }
-  }
-}
-
-const mouse_right_click = evt => {
-  if (!drag_active) {
-    let zoom_slider = $id("zoom")
-    let max = parseInt(zoom_slider.max)
-    let val = parseInt(zoom_slider.value)
-    let min = parseInt(zoom_slider.min)
-
-    if (val - DEFAULT_ZOOM_STEP >= min) {
-      img_params.zoom.currentValue -= DEFAULT_ZOOM_STEP
-      mandelbrot.zoom -= img_params.zoom.currentValue
-      draw_fractal(mandelbrot)
-    }
-  }
-
-  return false
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 function Fractal(name, canvas, context, image, imgStart, imgEnd) {
   this.name     = name
@@ -156,12 +127,10 @@ const mCanvas  = $id('mandelImage')
 mCanvas.width  = DEFAULT_CANVAS_WIDTH
 mCanvas.height = DEFAULT_CANVAS_HEIGHT
 
-mCanvas.addEventListener('mousemove',   mouse_track, false)
-mCanvas.addEventListener('mousedown',   mouse_down, false)
-mCanvas.addEventListener('mouseup',     mouse_up, false)
-mCanvas.addEventListener('mouseout',    mouse_up, false)
-// mCanvas.addEventListener('click',       mouse_left_click, false)
-// mCanvas.addEventListener('contextmenu', mouse_right_click, false)
+mCanvas.addEventListener('mousemove', mouse_track, false)
+mCanvas.addEventListener('mousedown', mouse_down, false)
+mCanvas.addEventListener('mouseup',   mouse_up, false)
+mCanvas.addEventListener('mouseout',  mouse_up, false)
 
 const mContext    = mCanvas.getContext('2d')
 const mImage      = mContext.createImageData(mCanvas.width, mCanvas.height)
@@ -191,16 +160,6 @@ const palettePages = 4
 
 const wasmMemory  = new WebAssembly.Memory({ initial : mImagePages + jImagePages + palettePages })
 const wasmMemBuff = new Uint8ClampedArray(wasmMemory.buffer)
-
-const import_object = {
-  math : Math,
-  js : {
-    shared_mem        : wasmMemory,
-    mandel_img_offset : 0,
-    julia_img_offset  : WASM_PAGE_SIZE * mImagePages,
-    palette_offset    : WASM_PAGE_SIZE * (mImagePages + jImagePages),
-  }
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Manage image parameters
@@ -247,7 +206,7 @@ const draw_fractal = f => {
 
   switch(f.name) {
     case "mandel":
-      window.mandel_plot(
+      window.wasm.mandel_plot(
         f.canvas.width,
         f.canvas.height,
         f.origin_x,
@@ -258,7 +217,7 @@ const draw_fractal = f => {
       break
 
     case "julia":
-      window.julia_plot(
+      window.wasm.julia_plot(
         f.canvas.width,
         f.canvas.height,
         f.origin_x,
@@ -291,7 +250,7 @@ const update_img = evt => {
   switch(evt.target.id) {
     // Rebuild the colour palette
     case "max_iters":
-      window.hsl_to_rgb(img_params.max_iters.currentValue)
+      window.wasm.hsl_to_rgb(img_params.max_iters.currentValue)
       break
 
     // Whenever the origin moves, update the pixel to coordinate translation functions
@@ -316,7 +275,7 @@ const resetUI = () => {
   img_params = Object.keys(img_params).reduce((acc, sId) => { acc[sId] = reset_img_params(sId); return acc }, {})
 
   // Generate default colour palette
-  window.hsl_to_rgb(DEFAULT_MAX_ITERS)
+  window.wasm.hsl_to_rgb(DEFAULT_MAX_ITERS)
 
   mandelbrot.origin_x = DEFAULT_ORIGIN_X
   mandelbrot.origin_y = DEFAULT_ORIGIN_Y
@@ -335,16 +294,30 @@ const instantiationSequence = [
   new WasmModule('./build/canvas.wasm',         'canvas'),
 ]
 
-instantiateWasmModuleSequence(instantiationSequence, import_object)
+// Functions that either supplied to WASM by the host environment or are shared between WASM modules
+const host_fns = {
+  math : Math,
+  js : {
+    shared_mem        : wasmMemory,
+    mandel_img_offset : 0,
+    julia_img_offset  : WASM_PAGE_SIZE * mImagePages,
+    palette_offset    : WASM_PAGE_SIZE * (mImagePages + jImagePages),
+  }
+}
+
+// Create WASM property in the Window object
+if (window.wasm === undefined) window.wasm = {}
+
+instantiateWasmModuleSequence(instantiationSequence, host_fns)
   .then(wasmModules => {
     // testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
     // testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
     // testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
     // showHostFns(wasmModules.hostFunctions)
 
-    window.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
-    window.julia_plot  = wasmModules.canvas.instance.exports.julia_plot
-    window.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
+    window.wasm.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
+    window.wasm.julia_plot  = wasmModules.canvas.instance.exports.julia_plot
+    window.wasm.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
 
     let zoom_slider = $id("zoom")
     zoom_slider.step = DEFAULT_ZOOM_STEP
