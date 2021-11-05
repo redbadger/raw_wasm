@@ -1,0 +1,16 @@
+@import url(https://fonts.googleapis.com/css?family=Raleway);
+
+body {
+  font-family: Raleway;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0.67em 0;
+  text-align: center;
+}
+
+.rb_logo {
+  width: 176px;
+  height: 44px;
+}

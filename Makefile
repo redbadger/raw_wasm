@@ -20,3 +20,8 @@ clean:
 	rm ./src/mandel/*.wasm
 	rm ./src/render/*.wasm
 	rm ./build/*.wasm
+
+opt:
+	wasm-opt ./build/colour_palette.wasm -O3 -o ./build/colour_palette-3.wasm
+	wasm-opt ./build/mandel.wasm -O3 -o ./build/mandel-3.wasm
+	wasm-opt ./build/canvas.wasm -O3 -o ./build/canvas-3.wasm

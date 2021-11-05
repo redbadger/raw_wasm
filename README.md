@@ -64,9 +64,11 @@ By moving the sliders, you can change the following parameters of the Mandelbrot
 If you want to compile the WebAssembly Text yourself, then you should install the relevant WebAssembly tools.
 Several options are available here, but I have developed this app using the WebAssembly tools from [`wasmer.io`](https://docs.wasmer.io/ecosystem/wasmer/getting-started)
 
-Clone the repo into a directory accesible from a Web Server.  This is necessary because browsers typically do not allow WebAssembly modules to be transfered using the `file://` protocol.
-
-Point your browser to `index.html`
+1. Clone the repo into a directory accesible from a Web Server.
+This is necessary because browsers typically do not allow WebAssembly modules to be transfered using the `file://` protocol.
+1. Assuming you have the tools `wat2wasm` and `wasm-opt` installed, run `make` followed by `make opt`
+1. Point your browser to `index.html`
+1. As you move the mouse pointer over the Mandelbrot Set, the Julia Set corresponding to that location will be rendered in the canvas below
 
 Enjoy!
 

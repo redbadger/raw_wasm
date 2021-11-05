@@ -2,32 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<title>Writing in Raw WebAssembly Text</title>
+<link rel="stylesheet" href="./assets/style.css"charset="utf8">
 <style>
-input[type="range"].horizontal {
+[type="range"].horizontal {
   width: 400px
 }
 </style>
 </head>
 <body>
-  <section id="plotArea">
-    <table>
-    <tr><td>Maximum iterations</td>
-        <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" value="1000"></td>
-        <td><span id="max_iters_txt"></span></td></tr>
-    <tr><td>Zoom</td>
-        <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" value="200"></td>
-        <td><span id="zoom_txt"></span></td></tr>
-    <tr><td colspan="3" style="text-align: center;"><input id="reset_ui_button" type="button" value="Reset image"></td></tr>
-    <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
-    <tr><td colspan="3">Drag to move image</td></tr>
-    <tr><td colspan="3">
-            <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
-    <tr><td colspan="3">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
-    <tr><td colspan="3">Julia set calculated in <span id="julia_exec_time"></span>ms</td></tr>
-    <tr><td colspan="3">
-      <canvas id="juliaImage"  style="border: 1px solid black"></canvas></td></tr>
-    </table>
-  </section>
+  <table>
+  <tr><td><a href="https://red-badger.com" target="_new"><img class="rb_logo" src="./assets/red-badger.svg"/></a></td>
+      <td></td>
+      <td><a href="https://github.com/redbadger/raw_wasm" target="_new">Git Repository</a></td></tr>
+  <tr><td colspan="3">
+      <h1 class="heading">Plotting Fractals Using Raw WebAssembly Text</h1></td></tr>
+  <tr><td>Maximum iterations</td>
+      <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" value="1000"></td>
+      <td><span id="max_iters_txt"></span></td></tr>
+  <tr><td>Zoom</td>
+      <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" value="200"></td>
+      <td><span id="zoom_txt"></span></td></tr>
+  <tr><td colspan="3" style="text-align: center;"><input id="reset_ui_button" type="button" value="Reset image"></td></tr>
+  <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
+  <tr><td colspan="3">Drag to move image</td></tr>
+  <tr><td colspan="3">
+          <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
+  <tr><td colspan="3">Julia set corresponding to coordinates (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
+  <tr><td colspan="3">Julia set calculated in <span id="julia_exec_time"></span>ms</td></tr>
+  <tr><td colspan="3">
+    <canvas id="juliaImage" style="border: 1px solid black"></canvas></td></tr>
+  </table>
 <script type="module">
 // import {
 //   showHostFns,
@@ -289,9 +294,9 @@ const resetUI = () => {
 // dependencies on earlier modules
 const instantiationSequence = [
   // new WasmModule('./build/complex.wasm',       'cplx'),
-  new WasmModule('./build/mandel.wasm',         'mandel'),
-  new WasmModule('./build/colour_palette.wasm', 'colours'),
-  new WasmModule('./build/canvas.wasm',         'canvas'),
+  new WasmModule('./build/mandel-3.wasm',         'mandel'),
+  new WasmModule('./build/colour_palette-3.wasm', 'colours'),
+  new WasmModule('./build/canvas-3.wasm',         'canvas'),
 ]
 
 // Functions that either supplied to WASM by the host environment or are shared between WASM modules
