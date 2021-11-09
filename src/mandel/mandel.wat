@@ -72,8 +72,6 @@
         (param $max_iters i32)
         (result i32)
 
-    (local $return_val i32)
-
     (local $x_plus_1    f64)
     (local $x_minus_qtr f64)
     (local $y_sqrd      f64)
@@ -85,46 +83,31 @@
     (local.set $y_sqrd      (f64.mul (local.get $y) (local.get $y)))
     (local.set $q           (f64.add (f64.mul (local.get $x_minus_qtr) (local.get $x_minus_qtr)) (local.get $y_sqrd)))
 
-    (local.set $return_val (local.get $max_iters))
-
-    (block $bail_out_early
-      ;; Can we avoid running the escape time calculation?
-      (br_if $bail_out_early
-        (i32.or
-          ;; Is point in main cardioid?
-          (f64.le
-            (f64.mul
-              (local.get $q)
-              (f64.add (local.get $q) (local.get $x_minus_qtr))
-            )
-            (f64.mul
-              (f64.const 0.25)
-              (local.get $y_sqrd)
-            )
-          )
-          ;; Is point in period-2 bulb?
-          (f64.le
-            (f64.add
-              (f64.mul (local.get $x_plus_1) (local.get $x_plus_1))
-              (f64.mul (local.get $y) (local.get $y))
-            )
-            (f64.const 0.0625)
-          )
-        )
+    ;; Can we avoid running the escape time calculation?
+    (i32.or
+      ;; Is point in main cardioid?
+      ;; $q * ($q + ($x - 0.25)) <= $y^2 / 4
+      (f64.le
+        (f64.mul (local.get $q) (f64.add (local.get $q) (local.get $x_minus_qtr)))
+        (f64.mul (f64.const 0.25) (local.get $y_sqrd))
       )
-
-      (local.set
-        $return_val
-        (call $escape_time_mj
-          (local.get $x)
-          (local.get $y)
-          (f64.const 0)
-          (f64.const 0)
-          (local.get $max_iters)
+      ;; Is point in period-2 bulb?
+      ;; ($x + 1)^2 + $y^2 <= 0.0625
+      (f64.le
+        (f64.add
+          (f64.mul (local.get $x_plus_1) (local.get $x_plus_1))
+          (f64.mul (local.get $y) (local.get $y))
         )
+        (f64.const 0.0625)
       )
     )
 
-    (local.get $return_val)
+    i32.eqz
+
+    if (result i32)
+      (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
+    else
+      (local.get $max_iters)
+    end
   )
 )

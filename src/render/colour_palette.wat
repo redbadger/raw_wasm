@@ -35,7 +35,7 @@
     i32.const 1                ;; [1 - $ratio, $ratio, $dir, 1]
     i32.eq                     ;; [1 - $ratio, $ratio, $dir == 1?]
 
-    select                     ;; Pick stack value -2 or -1 based value whether top of stack == 0
+    select                     ;; Pick stack value -2 or -1 based on whether top of stack == 0
 
     f32.const 255
     f32.mul
