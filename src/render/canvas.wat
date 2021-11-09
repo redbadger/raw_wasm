@@ -13,73 +13,6 @@
   (global $BLACK i32 (i32.const 0xFF000000))
 
   ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Translate an X or Y canvas position to the corresponding X or Y coordinate on the complex plane on the assumption
-  ;; that the coordinate origin is located at the midpoint of the canvas dimension
-  ;; ($mouse_pos, $canvas_dim, $ppu) => ($mouse_pos - ($canvas_dim / 2)) / $ppu
-  (func $pxl_to_coord
-        (export "pxl_to_coord")
-        (param $mouse_pos i32)     ;; Mouse X or Y location on canvas
-        (param $canvas_dim i32)    ;; Canvas width or height
-        (param $ppu i32)           ;; Pixels per unit (zoom level)
-        (result f64)
-    (f64.div
-      (f64.sub
-        (f64.convert_i32_u (local.get $mouse_pos))
-        (f64.div (f64.convert_i32_u (local.get $canvas_dim)) (f64.const 2))
-      )
-      (f64.convert_i32_u (local.get $ppu))
-    )
-  )
-
-  ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Translate an X or Y canvas position to the corresponding X or Y coordinate on the complex plane allowing for an
-  ;; off-centre origin
-  ;; ($mouse_pos, $canvas_dim, $origin, $ppu) => $origin + $pxl_to_coord($mouse_pos, $canvas_dim, $ppu)
-  (func $pxl_to_coord_with_offset
-        (export "pxl_to_coord_with_offset")
-        (param $mouse_pos i32)     ;; Mouse X or Y location on canvas
-        (param $canvas_dim i32)    ;; Canvas width or height
-        (param $origin f64)        ;; Origin coordinate relative to the dimension midpoint
-        (param $ppu i32)           ;; Pixels per unit (zoom level)
-        (result f64)
-    (f64.add
-      (local.get $origin)
-      (call $pxl_to_coord (local.get $mouse_pos) (local.get $canvas_dim) (local.get $ppu))
-    )
-  )
-
-  ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Load the colour at offset $idx from the colour palette
-  (func $load_from_palette
-        (param $idx i32)
-        (result i32)
-    (i32.load
-      (i32.add
-        (global.get $palette_offset)
-        (i32.mul (local.get $idx) (i32.const 4))
-      )
-    )
-  )
-
-  ;; -------------------------------------------------------------------------------------------------------------------
-  ;; Write pixel colour to memory
-  (func $write_pixel_colour
-        (param $pixel_val i32)
-        (param $pixel_offset i32)
-        (param $max_iters i32)
-    (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
-      (then
-        ;; Any pixel that hits $max_iters is arbitrarily set to black
-        (i32.store (local.get $pixel_offset) (global.get $BLACK))
-      )
-      (else
-        ;; Store the colour fetched from the palette
-        (i32.store (local.get $pixel_offset) (call $load_from_palette (local.get $pixel_val)))
-      )
-    )
-  )
-
-  ;; -------------------------------------------------------------------------------------------------------------------
   ;; Plot Mandelbrot set
   (func $mandel_plot
         (export "mandel_plot")
@@ -93,13 +26,28 @@
     (local $y_pos i32)
     (local $x_coord f64)
     (local $y_coord f64)
+    (local $temp_x_coord f64)
+    (local $temp_y_coord f64)
     (local $pixel_offset i32)
     (local $pixel_val i32)
     (local $pixel_colour i32)
+    (local $ppu_f64 f64)
+
+    (local $half_width f64)
+    (local $half_height f64)
+
+    (local.set $half_width  (f64.convert_i32_u (i32.shr_u (local.get $width) (i32.const 1))))
+    (local.set $half_height (f64.convert_i32_u (i32.shr_u (local.get $height) (i32.const 1))))
 
     (local.set $x_pos (i32.const 0))
     (local.set $y_pos (i32.const 0))
     (local.set $pixel_offset (global.get $mandel_img_offset))
+    (local.set $ppu_f64 (f64.convert_i32_u (local.get $ppu)))
+
+    ;; Intermediate X and Y coords based on static values
+    ;; $origin - ($half_dimension / $ppu)
+    (local.set $temp_x_coord (f64.sub (local.get $origin_x) (f64.div (local.get $half_width) (local.get $ppu_f64))))
+    (local.set $temp_y_coord (f64.sub (local.get $origin_y) (f64.div (local.get $half_height) (local.get $ppu_f64))))
 
     (loop $rows
       (block $exit_rows
@@ -108,7 +56,10 @@
 
         ;; Translate y position to y coordinate
         (local.set $y_coord
-          (call $pxl_to_coord_with_offset (local.get $y_pos) (local.get $height) (local.get $origin_y) (local.get $ppu))
+          (f64.add
+            (local.get $temp_y_coord)
+            (f64.div (f64.convert_i32_u (local.get $y_pos)) (local.get $ppu_f64))
+          )
         )
 
         (loop $cols
@@ -118,7 +69,10 @@
 
             ;; Translate x position to x coordinate
             (local.set $x_coord
-              (call $pxl_to_coord_with_offset (local.get $x_pos) (local.get $width) (local.get $origin_x) (local.get $ppu))
+              (f64.add
+                (local.get $temp_x_coord)
+                (f64.div (f64.convert_i32_u (local.get $x_pos)) (local.get $ppu_f64))
+              )
             )
 
             ;; Calculate the current pixel's iteration value
@@ -130,7 +84,26 @@
               )
             )
 
-            (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
+            ;; (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
+            (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
+              (then
+                ;; Any pixel that hits $max_iters is arbitrarily set to black
+                (i32.store (local.get $pixel_offset) (global.get $BLACK))
+              )
+              (else
+                ;; Store the colour fetched from the palette
+                (i32.store
+                  (local.get $pixel_offset)
+                  ;; (call $load_from_palette (local.get $pixel_val))
+                  (i32.load
+                    (i32.add
+                      (global.get $palette_offset)
+                      (i32.mul (local.get $pixel_val) (i32.const 4))
+                    )
+                  )
+                )
+              )
+            )
 
             ;; Increment column and memory offset counters
             (local.set $x_pos (i32.add (local.get $x_pos) (i32.const 1)))
@@ -165,36 +138,49 @@
     (local $y_pos i32)         ;; Iteration counter
     (local $x_coord f64)       ;; Iteration coordinate
     (local $y_coord f64)       ;; Iteration coordinate
+    (local $half_width f64)
+    (local $half_height f64)
     (local $mandel_x_f64 f64)
     (local $mandel_y_f64 f64)
     (local $pixel_offset i32)  ;; Memory offset of calculated pixel
     (local $pixel_val i32)     ;; Iteration value of calculated pixel
     (local $pixel_colour i32)  ;; Calculated pixel colour
-    (local $j_ppu i32)         ;; Zoom level of Julia set image
+    (local $j_ppu f64)         ;; Zoom level of Julia set image
+
+    (local.set $half_width  (f64.convert_i32_u (i32.shr_u (local.get $width) (i32.const 1))))
+    (local.set $half_height (f64.convert_i32_u (i32.shr_u (local.get $height) (i32.const 1))))
 
     ;; Julia set images always have a fixed zoom level of 200 pixels per unit
-    (local.set $j_ppu (i32.const 200))
+    (local.set $j_ppu (f64.const 200))
 
     ;; Point to the start of the Julia set memory space
     (local.set $pixel_offset (global.get $julia_img_offset))
 
     ;; Convert mouse position over Mandelbrot set to complex plane coordinates
     (local.set $mandel_x_f64
-      (call $pxl_to_coord_with_offset
-        (local.get $mandel_x)
-        (local.get $width)
+      (f64.add
         (local.get $origin_x)
-        (local.get $ppu)
+        (f64.div
+          (f64.sub
+            (f64.convert_i32_u (local.get $mandel_x))
+            (f64.div (f64.convert_i32_u (local.get $width)) (f64.const 2))
+          )
+          (f64.convert_i32_u (local.get $ppu))
+        )
       )
     )
     (local.set $mandel_y_f64
       ;; Flip the sign because positive Y axis goes downwards
       (f64.neg
-        (call $pxl_to_coord_with_offset
-          (local.get $mandel_y)
-          (local.get $height)
+        (f64.add
           (local.get $origin_y)
-          (local.get $ppu)
+          (f64.div
+            (f64.sub
+              (f64.convert_i32_u (local.get $mandel_y))
+              (f64.div (f64.convert_i32_u (local.get $height)) (f64.const 2))
+            )
+            (f64.convert_i32_u (local.get $ppu))
+          )
         )
       )
     )
@@ -207,7 +193,12 @@
 
         ;; Translate Y pixel to Y coordinate
         (local.set $y_coord
-          (f64.neg (call $pxl_to_coord (local.get $y_pos) (local.get $height) (local.get $j_ppu)))
+          (f64.neg
+            (f64.div
+              (f64.sub (f64.convert_i32_u (local.get $y_pos)) (local.get $half_height))
+              (local.get $j_ppu)
+            )
+          )
         )
 
         (loop $cols
@@ -217,7 +208,10 @@
 
             ;; Translate X pixel to X coordinate
             (local.set $x_coord
-              (call $pxl_to_coord (local.get $x_pos) (local.get $width) (local.get $j_ppu))
+              (f64.div
+                (f64.sub (f64.convert_i32_u (local.get $x_pos)) (local.get $half_width))
+                (local.get $j_ppu)
+              )
             )
 
             ;; Calculate the current pixel's iteration value
@@ -231,7 +225,26 @@
               )
             )
 
-            (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
+            ;; (call $write_pixel_colour (local.get $pixel_val) (local.get $pixel_offset) (local.get $max_iters))
+            (if (i32.eq (local.get $pixel_val) (local.get $max_iters))
+              (then
+                ;; Any pixel that hits $max_iters is arbitrarily set to black
+                (i32.store (local.get $pixel_offset) (global.get $BLACK))
+              )
+              (else
+                ;; Store the colour fetched from the palette
+                (i32.store
+                  (local.get $pixel_offset)
+                  ;; (call $load_from_palette (local.get $pixel_val))
+                  (i32.load
+                    (i32.add
+                      (global.get $palette_offset)
+                      (i32.mul (local.get $pixel_val) (i32.const 4))
+                    )
+                  )
+                )
+              )
+            )
 
             ;; Increment column and memory offset counters
             (local.set $x_pos (i32.add (local.get $x_pos) (i32.const 1)))

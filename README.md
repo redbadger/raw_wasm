@@ -10,22 +10,16 @@ The purpose of learning to write in raw WebAssembly Text (WAT) is to achieve the
 Some would argue that neither of these tasks need to be performed by humans because modern compilers are efficient enough to relieve us of this particular workload.
 Well, maybe &mdash; but not really.
 
-By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.5 Kb.
+By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.3 Kb.
 However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
-
-It should also be pointed out that just because a binary file is small does not means that it runs quickly.
-On the one hand, the fewer the number instructions needed to perform a task, the faster that task can be accomplished; on the other hand, certain WAT instructions are convenient but expensive and should therefore be used sparingly.
-
-For example, the instruction `f64.promote_f32` offers a convenient way to promote a 32-bit floating point value to a 64-bit floating point value.
-However, using this instruction inside a loop executed 360,000 times doubled the execution time of that loop...
 
 ## Objectives
 
 This exercise aims to achieve the following objectives:
 
-1. How to write and test libraries in raw WebAssembly Text
-1. How to get those libraries to interact
-1. Actually implementing the code that plots the Mandelbrot and Julia Sets
+1. Learn how to write and test libraries in raw WebAssembly Text
+1. Learn how to get those libraries to interact
+1. Learn how the optimizer tool `wasm-opt` reduces a WASM file size then apply those techniques when first writing the code
 
 Three WASM modules are instantiated sequentially: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`.
 The instantiation process allows each subsequent module to import (if necessary) any functions exported by the previous module instance.
