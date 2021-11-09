@@ -47,13 +47,6 @@ import {
   instantiateWasmModuleSequence
 } from "./src/js/wasmBrowserUtils.js"
 
-// import { complexTestMap } from "./src/complex/tests.js"
-// import { mandelTestMap }  from "./src/mandel/tests.js"
-// import { colourTestMap }  from "./src/render/tests.js"
-
-// const TEST_MODE   = false
-// const SHOW_DETAIL = false
-
 const WASM_PAGE_SIZE = 1024 * 64
 
 const DEFAULT_CANVAS_WIDTH  = 800
@@ -290,13 +283,11 @@ const resetUI = () => {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// These WASM modules must be instantiated in the order listed below due to the fact that later modules have import
-// dependencies on earlier modules
+// These WASM modules must be instantiated in the order listed below due to the fact that later modules might have
+// import dependencies on earlier modules
 const instantiationSequence = [
-  // new WasmModule('./build/complex.wasm',       'cplx'),
-  new WasmModule('./build/mandel-3.wasm',         'mandel'),
   new WasmModule('./build/colour_palette-3.wasm', 'colours'),
-  new WasmModule('./build/canvas-3.wasm',         'canvas'),
+  new WasmModule('./build/mj_plot-3.wasm',        'mj_plot'),
 ]
 
 // Functions that either supplied to WASM by the host environment or are shared between WASM modules
@@ -315,13 +306,8 @@ if (window.wasm === undefined) window.wasm = {}
 
 instantiateWasmModuleSequence(instantiationSequence, host_fns)
   .then(wasmModules => {
-    // testWasm(TEST_MODE, wasmModules.cplx.instance, complexTestMap, SHOW_DETAIL)
-    // testWasm(TEST_MODE, wasmModules.mandel.instance, mandelTestMap, SHOW_DETAIL)
-    // testWasm(TEST_MODE, wasmModules.canvas.instance, colourTestMap, SHOW_DETAIL)
-    // showHostFns(wasmModules.hostFunctions)
-
-    window.wasm.mandel_plot = wasmModules.canvas.instance.exports.mandel_plot
-    window.wasm.julia_plot  = wasmModules.canvas.instance.exports.julia_plot
+    window.wasm.mandel_plot = wasmModules.mj_plot.instance.exports.mandel_plot
+    window.wasm.julia_plot  = wasmModules.mj_plot.instance.exports.julia_plot
     window.wasm.hsl_to_rgb  = wasmModules.colours.instance.exports.hsl_to_rgb
 
     let zoom_slider = $id("zoom")

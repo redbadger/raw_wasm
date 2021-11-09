@@ -1,27 +1,18 @@
-gather: complex.wasm mandel.wasm colour_palette.wasm canvas.wasm
-	cp ./src/complex/*.wasm ./build
-	cp ./src/mandel/*.wasm ./build
+gather: mj_plot.wasm colour_palette.wasm
+	cp ./src/mj_plot/*.wasm ./build
 	cp ./src/render/*.wasm ./build
 
-complex.wasm: ./src/complex/complex.wat
-	wat2wasm ./src/complex/complex.wat -o ./src/complex/complex.wasm
-
-mandel.wasm: ./src/mandel/mandel.wat
-	wat2wasm ./src/mandel/mandel.wat -o ./src/mandel/mandel.wasm
+mj_plot.wasm: ./src/mj_plot/mj_plot.wat
+	wat2wasm ./src/mj_plot/mj_plot.wat -o ./src/mj_plot/mj_plot.wasm
 
 colour_palette.wasm: ./src/render/colour_palette.wat
 	wat2wasm ./src/render/colour_palette.wat -o ./src/render/colour_palette.wasm
 
-canvas.wasm: ./src/render/canvas.wat
-	wat2wasm ./src/render/canvas.wat -o ./src/render/canvas.wasm
-
 clean:
-	rm ./src/complex/*.wasm
-	rm ./src/mandel/*.wasm
+	rm ./src/mj_plot/*.wasm
 	rm ./src/render/*.wasm
 	rm ./build/*.wasm
 
 opt:
 	wasm-opt ./build/colour_palette.wasm -O3 -o ./build/colour_palette-3.wasm
-	wasm-opt ./build/mandel.wasm -O3 -o ./build/mandel-3.wasm
-	wasm-opt ./build/canvas.wasm -O3 -o ./build/canvas-3.wasm
+	wasm-opt ./build/mj_plot.wasm -O3 -o ./build/mj_plot-3.wasm
