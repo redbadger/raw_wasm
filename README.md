@@ -2,33 +2,34 @@
 
 ## Motivation
 
-The purpose of learning to write in raw WebAssembly Text (WAT) is to achieve the following goals:
+Two of the key advantages of writing in raw WebAssembly Text (WAT) is that you can:
 
 1. Create code that compiles to the smallest possible (or at least very small) binary file
 1. Create code that runs really fast
 
-Some would argue that neither of these tasks need to be performed by humans because modern compilers are efficient enough to relieve us of this particular workload.
-Well, maybe &mdash; but not really.
+Some would argue that us humans need not concern ourselves too deeply with these questions because modern compilers are efficient enough to relieve us of this particular workload.
+Well, maybe, kind of &mdash; but no, not really.
 
-By writing the numerically intensive part of this application directly in WAT, I have managed to get the generated WASM binary files down to just over 1.2 Kb.
+By writing the numerically intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the generated WASM binary files down to just under 1Kb!
 However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
 
 ## Objectives
 
-This exercise aims to achieve the following objectives:
+This was a learning exercise with the following objectives:
 
 1. Learn how to write and test libraries in raw WebAssembly Text
 1. Learn how to get those libraries to interact
+1. Learn to use WebAssembly threads
 1. Learn how the optimizer tool `wasm-opt` reduces a WASM file size then apply those techniques when first writing the code
 
-Three WASM modules are instantiated sequentially: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`.
+Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`; but this has now been reduced to just `mj_plot.wasm` and `colour_palette.wasm`.
 The instantiation process allows each subsequent module to import (if necessary) any functions exported by the previous module instance.
 
 > ### Testing
 > 
 > During development, it was necessary to test the functions exported from each WASM library.
 > So I developed a small test framework that picks up a WASM module and attempts to find a test for every exported function.
-> It then reports on whether or not a test was found for each exported function, and what the outcome of each test was.
+> It then reports on whether or not a test was found, and if so, reports the test outcome.
 > 
 > This code is still present in the repo but has been removed from `index.html`.
 
@@ -44,6 +45,10 @@ You can drag the Mandelbrot set image to reposition it.
 
 By moving the sliders, you can change the following parameters of the Mandelbrot Set:
 
+* ***Web Workers***  
+   The number of Web Works can be varied in order to compare performance times.
+   Each time this value is changed, the Web Worker collection is thrown away and rebuilt.
+
 * ***Maximum Iterations***  
    The maximum number of times the escape time algorithm is run to calculate a pixel's value.
    The higher this value, the longer the escape time algorithm will take to run.
@@ -58,6 +63,9 @@ By moving the sliders, you can change the following parameters of the Mandelbrot
 If you want to compile the WebAssembly Text yourself, then you should install the relevant WebAssembly tools.
 Several options are available here, but I have developed this app using the WebAssembly tools from [`wasmer.io`](https://docs.wasmer.io/ecosystem/wasmer/getting-started)
 
+> ***IMPORTANT***  
+> Due to the fact that these WebAssembly programs access shared memory using atomic read-modify-write instructions, they must be compiled with the `--enable-threads` option when running both `wat2wasm` and `wasm-opt`
+
 1. Clone the repo into a directory accesible from a Web Server.
 This is necessary because browsers typically do not allow WebAssembly modules to be transfered using the `file://` protocol.
 1. Assuming you have the tools `wat2wasm` and `wasm-opt` installed, run `make` followed by `make opt`
@@ -65,9 +73,3 @@ This is necessary because browsers typically do not allow WebAssembly modules to
 1. As you move the mouse pointer over the Mandelbrot Set, the Julia Set corresponding to that location will be rendered in the canvas below
 
 Enjoy!
-
-## ToDos
-
-At the moment, when certain errors take place (such as division by zero), the WASM code will invoke the instruction `unreachable`.  This will raise an unexplained exception in the host environment.
-
-All such statements need to be replaced with `trap` statements.
