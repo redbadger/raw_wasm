@@ -35,7 +35,29 @@ The instantiation process allows each subsequent module to import (if necessary)
 
 ## Implementation
 
+Unfortunately, the live demo is now broken  :-(
+
 [Live demo](https://redbadger.github.io/raw_wasm/)
+
+This is because if you want multiple WebAssembly instances running inside Web Workers to access the same block of shared memory, then the Web Server that supplied the WASM must respond with these HTTP headers (see [here](https://developer.chrome.com/blog/enabling-shared-array-buffer/) for details):
+
+```
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Opener-Policy: same-origin
+```
+
+However, if you'd like to run this app locally, you will need to modify your Web Server configuration such that the server responds with these headers:
+
+For instance, in `httpd.conf`, your will need to modify the `headers_module` section:
+
+```
+<IfModule headers_module>
+    Header set Cross-Origin-Embedder-Policy "require-corp"
+    Header set Cross-Origin-Opener-Policy "same-origin"
+</IfModule>
+```
+
+The restart your Web Server
 
 ![./Screenshot.png](./Screenshot.png)
 
