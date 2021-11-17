@@ -34,7 +34,7 @@ Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wa
 
 ## Implementation
 
-[Live demo](https://my-worker.chris-whealy-wasm.workers.dev/)
+[Live demo](https://raw-wasm.pages.dev/)
 
 ![./Screenshot.png](./Screenshot.png)
 
