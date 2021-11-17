@@ -34,29 +34,7 @@ Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wa
 
 ## Implementation
 
-Unfortunately, the live demo is now broken  :-(
-
-[Live demo](https://redbadger.github.io/raw_wasm/)
-
-This is because if you want multiple WebAssembly instances running inside Web Workers to access the same block of shared memory, then the Web Server that supplied the WASM must respond with these HTTP headers (see [here](https://developer.chrome.com/blog/enabling-shared-array-buffer/) for details):
-
-```
-Cross-Origin-Embedder-Policy: require-corp
-Cross-Origin-Opener-Policy: same-origin
-```
-
-However, if you'd like to run this app locally, you will need to modify your Web Server configuration such that the server responds with these headers:
-
-For instance, in `httpd.conf`, your will need to modify the `headers_module` section:
-
-```
-<IfModule headers_module>
-    Header set Cross-Origin-Embedder-Policy "require-corp"
-    Header set Cross-Origin-Opener-Policy "same-origin"
-</IfModule>
-```
-
-The restart your Web Server
+[Live demo](https://my-worker.chris-whealy-wasm.workers.dev/)
 
 ![./Screenshot.png](./Screenshot.png)
 
@@ -84,8 +62,23 @@ By moving the sliders, you can change the following parameters of the Mandelbrot
 If you want to compile the WebAssembly Text yourself, then you should install the relevant WebAssembly tools.
 Several options are available here, but I have developed this app using the WebAssembly tools from [`wasmer.io`](https://docs.wasmer.io/ecosystem/wasmer/getting-started)
 
-> ***IMPORTANT***  
-> Due to the fact that these WebAssembly programs access shared memory using atomic read-modify-write instructions, they must be compiled with the `--enable-threads` option when running both `wat2wasm` and `wasm-opt`
+> ***IMPORTANT***
+> 
+> 1. Due to the fact that these WebAssembly programs access shared memory using atomic read-modify-write instructions, they must be compiled with the `--enable-threads` option when running both `wat2wasm` and `wasm-opt`
+> 
+> 1. If you'd like to run this app locally, you will need to modify your Web Server configuration such that the server responds with these headers:
+>
+>   For instance, if you use Apache as your Web server, then in `httpd.conf`, you will need to modify the `headers_module` section:
+> 
+>  ```
+>  <IfModule headers_module>
+>       Header set Cross-Origin-Embedder-Policy "require-corp"
+>       Header set Cross-Origin-Opener-Policy "same-origin"
+>  </IfModule>
+>  ```
+> 
+>   Restart your Web Server
+
 
 1. Clone the repo into a directory accesible from a Web Server.
 This is necessary because browsers typically do not allow WebAssembly modules to be transfered using the `file://` protocol.
@@ -94,7 +87,3 @@ This is necessary because browsers typically do not allow WebAssembly modules to
 1. As you move the mouse pointer over the Mandelbrot Set, the Julia Set corresponding to that location will be rendered in the canvas below
 
 Enjoy!
-
-## TODO
-
-Fix the live demo!
