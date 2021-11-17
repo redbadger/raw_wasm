@@ -2,16 +2,16 @@
 
 ## Motivation
 
-Two of the key advantages of writing in raw WebAssembly Text (WAT) is that you can:
+Two of the key advantages of writing in raw WebAssembly Text (WAT) are that you can:
 
 1. Create code that compiles to the smallest possible (or at least very small) binary file
 1. Create code that runs really fast
 
-Some would argue that us humans need not concern ourselves too deeply with these questions because modern compilers are efficient enough to relieve us of this particular workload.
+Some would argue that us humans need not concern ourselves too deeply with these tasks because modern compilers are efficient enough to relieve us of this particular workload.
 Well, maybe, kind of &mdash; but no, not really.
 
 By writing the numerically intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the generated WASM binary files down to just under 1Kb!
-However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is an order of magnitude larger at 1.8 Mb.
+However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is 116 times larger at just over 74Kb.
 
 ## Objectives
 
@@ -22,8 +22,7 @@ This was a learning exercise with the following objectives:
 1. Learn to use WebAssembly threads
 1. Learn how the optimizer tool `wasm-opt` reduces a WASM file size then apply those techniques when first writing the code
 
-Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`; but this has now been reduced to just `mj_plot.wasm` and `colour_palette.wasm`.
-The instantiation process allows each subsequent module to import (if necessary) any functions exported by the previous module instance.
+Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`; but this has now been reduced to a single module `mj_plot.wasm`.
 
 > ### Testing
 > 
@@ -95,3 +94,7 @@ This is necessary because browsers typically do not allow WebAssembly modules to
 1. As you move the mouse pointer over the Mandelbrot Set, the Julia Set corresponding to that location will be rendered in the canvas below
 
 Enjoy!
+
+## TODO
+
+Fix the live demo!

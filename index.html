@@ -364,7 +364,6 @@ const update_img = evt => {
  * Functions that are either supplied to WASM by the host environment or are shared between WASM modules
  */
 const host_fns = {
-  math : Math,
   js : {
     shared_mem        : wasmMemory,
     mandel_img_offset : COUNTERS_LEN,

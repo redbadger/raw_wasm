@@ -1,82 +1,18 @@
-const microPrecision = val => Math.round(val * 10000) / 10000
-const interval       = time => microPrecision(time.end - time.start)
-const i32AsString    = n => ((n1, sign) => `${sign}0x${n1.toString(16).padStart(8,'0')}`)(Math.abs(n), n < 0 ? '-' : '')
-const setProperty    = (obj, propName, propVal) => (_ => obj)(obj[propName] = propVal)
-
-/* ---------------------------------------------------------------------------------------------------------------------
- * Return an object containing the pathname to a compiled WASM module and the name of the library into which its
- * exported functions should be added
- *
- * @constructor
- * @param {string} pathToWasmBin - Pathname to compiled WASM module
- * @param {string} exportToLib   - The library name by which this WASM module's exported functions will be available
- */
-function WasmModule(pathToWasmBin, exportToLib) {
-  this.pathToWasmBin = pathToWasmBin
-  this.exportToLib = exportToLib
-}
-
-/* ---------------------------------------------------------------------------------------------------------------------
- * Add all the exports of a WASM instance to the possibly already existing `libName` property of object `hostFns`
- *
- * @param   {Object} wasmInstance - An instantiated WASM module that exports one or more functions
- * @param   {string} libName      - The library name by which the exported functions are grouped
- * @param   {string} hostFns      - The object acting as the repository for host functions
- *
- * @returns {Object} A new host functions object
- */
-const packageWasmExports =
-  (wasmInstance, libName, hostFns) =>
-    Object
-      .keys(wasmInstance.exports)
-      .reduce(
-        (acc, exp) => (_ => acc)(acc[libName][exp] = wasmInstance.exports[exp]),
-        setProperty(hostFns, libName, !!hostFns[libName] ? hostFns[libName] : {})
-      )
-
-/* ---------------------------------------------------------------------------------------------------------------------
- * Instantiate a list of WASM modules that potentially have import dependencies on some previously instantiated module
- *
- * @param {WasmModule[]} moduleSequence - A list of WASM modules listed in instantiation order
- * @param {object}       initialHostFns - The object containing any host functions imported by the first WASM module
- *
- * @returns {object} An object containing a `hostFunctions` property.  This contains all the functions exported by the
- *                   instantiated WASM modules
- */
-const instantiateWasmModuleSequence = async (moduleSequence, initialHostFns, worker_id) => {
-  let wasmModAccumulator = {}
-
-  wasmModAccumulator.hostFunctions = initialHostFns
-
-  for (let idx=0; idx < moduleSequence.length; idx++) {
-    const thisMod = moduleSequence[idx]
-    const wasmObj = await WebAssembly.instantiateStreaming(fetch(thisMod.pathToWasmBin), wasmModAccumulator.hostFunctions)
-
-    wasmModAccumulator.hostFunctions = packageWasmExports(
-      wasmObj.instance,
-      thisMod.exportToLib,
-      wasmModAccumulator.hostFunctions
-    )
-
-    wasmModAccumulator[thisMod.exportToLib] = wasmObj
-  }
-
-  return wasmModAccumulator
-}
-
-/* ---------------------------------------------------------------------------------------------------------------------
- * These WASM modules must be instantiated in the order listed below due to the fact that later modules might have
- * import dependencies on earlier modules
- */
-const instantiationSequence = [
-  new WasmModule('../../build/colour_palette-3.wasm', 'colours'),
-  new WasmModule('../../build/mj_plot-3.wasm',        'mj_plot'),
-]
+const i32AsString = n => ((n1, sign) => `${sign}0x${n1.toString(16).padStart(8,'0')}`)(Math.abs(n), n < 0 ? '-' : '')
 
 const WASM_LOG_MSGS = [
   { msg : "Mandelbrot: Pixel X,Y, value", asHex : [false, false, false] },
   { msg : "Julia: Pixel X, Y, value",     asHex : [false, false, false] },
 ]
+
+const gen_worker_msg_exec_complete = (worker_id, name, times) => ({
+  status  : 'exec_complete',
+  payload : {
+    worker_id : worker_id,
+    fractal   : name,
+    times     : times,
+  }
+})
 
 let mandel_plot
 let julia_plot
@@ -90,7 +26,7 @@ let times = {
 /* ---------------------------------------------------------------------------------------------------------------------
  * Worker inbound message handler
  */
-onmessage = ({ data }) => {
+onmessage = async ({ data }) => {
   // data = {
   //   action,                 // Task to be performed
   //   payload                 // Payload specific for current task
@@ -118,43 +54,30 @@ onmessage = ({ data }) => {
       // Supplement the host_fns object with objects that cannot be cloned (like functions)
       host_fns.js.log3 = logger
 
-      instantiateWasmModuleSequence(instantiationSequence, host_fns, worker_id)
-        .then(wasmModules => {
-          times.init.end = performance.now()
-          console.log(`Worker ${worker_id}: Initialised in ${interval(times.init)} ms`)
+      const wasmObj = await WebAssembly.instantiateStreaming(fetch('../../build/mj_plot-3.wasm'), host_fns)
 
-          mandel_plot = wasmModules.mj_plot.instance.exports.mandel_plot
-          julia_plot  = wasmModules.mj_plot.instance.exports.julia_plot
-          // paletteFn   = wasmModules.colours.instance.exports.hsl_to_rgb
-          paletteFn   = wasmModules.colours.instance.exports.gen_palette
-        })
-        .then(() => {
-          // The colour palette calculation does not need to be distributed across mulitple workers
-          // This task is performed only by worker 0
-          if (worker_id === 0) {
-            console.log("Worker 0: Calculating colour palette")
-            paletteFn(max_iters)
-          }
+      mandel_plot = wasmObj.instance.exports.mandel_plot
+      julia_plot  = wasmObj.instance.exports.julia_plot
+      paletteFn   = wasmObj.instance.exports.gen_palette
 
-          // Create initial Mandelbrot Set
-          times.exec.start = performance.now()
-          mandel_plot(
-            fractal.width,    fractal.height,
-            fractal.origin_x, fractal.origin_y,
-            fractal.zoom,     max_iters
-          )
-          times.exec.end = performance.now()
+      // The colour palette calculation does not need to be distributed across mulitple workers
+      // This task is performed only by worker 0
+      if (worker_id === 0) {
+        console.log("Worker 0: Calculating colour palette")
+        paletteFn(max_iters)
+      }
 
-          // Report execution complete
-          postMessage({
-            status  : 'exec_complete',
-            payload : {
-              worker_id : worker_id,
-              fractal   : "mandel",
-              times     : times
-            }
-          })
-        })
+      // Create initial Mandelbrot Set
+      times.exec.start = performance.now()
+      mandel_plot(
+        fractal.width,    fractal.height,
+        fractal.origin_x, fractal.origin_y,
+        fractal.zoom,     max_iters
+      )
+      times.exec.end = performance.now()
+
+      // Report execution complete
+      postMessage(gen_worker_msg_exec_complete(worker_id, "mandel", times))
 
       break
 
@@ -192,16 +115,8 @@ onmessage = ({ data }) => {
 
       times.exec.end = performance.now()
 
-      postMessage({
-        status  : 'exec_complete',
-        payload : {
-          worker_id : my_worker_id,
-          fractal   : fractal.name,
-          times     : times,
-        }
-      })
+      postMessage(gen_worker_msg_exec_complete(my_worker_id, fractal.name, times))
 
     default:
   }
-
 }
