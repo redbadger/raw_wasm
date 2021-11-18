@@ -10,46 +10,42 @@
   <tr><td><a href="https://red-badger.com" target="_new"><img class="rb_logo" src="./assets/red-badger.svg"/></a></td>
       <td style="text-align: right;">
           <a href="https://github.com/redbadger/raw_wasm" target="_new">Git Repository</a></td></tr>
-  <tr><td colspan="2">
+  <tr><td colspan="3">
       <h1 class="heading">Plotting Fractals Using WebAssembly Threads and Web Workers</h1></td></tr>
-  <tr><td>Web Workers</td>
-      <td><input class="horizontal" id="workers" type="range" min="1" max="12" step="1">
-          <span id="workers_txt"></span></td></tr>
-  <tr><td>Web Worker performance</td>
-      <td>
-        <table style="width: 46em; table-layout: fixed;" border="0" cellpadding="3" cellspacing="0">
-          <tr>
-            <td style="visibility : hidden" id="w0_cell"><span id="w0_label">W0:</span> <span id="w0"></span> ms</td>
-            <td class="visibility : hidden" id="w1_cell"><span id="w1_label">W1:</span> <span id="w1"></span> ms</td>
-            <td class="visibility : hidden" id="w2_cell"><span id="w2_label">W2:</span> <span id="w2"></span> ms</td>
-            <td class="visibility : hidden" id="w3_cell"><span id="w3_label">W3:</span> <span id="w3"></span> ms</td>
-            <td class="visibility : hidden" id="w4_cell"><span id="w4_label">W4:</span> <span id="w4"></span> ms</td>
-            <td class="visibility : hidden" id="w5_cell"><span id="w5_label">W5:</span> <span id="w5"></span> ms</td></tr>
-          <tr>
-            <td class="visibility: hidden" id="w6_cell"> <span id="w6_label">W6:</span> <span id="w6"></span> ms</td>
-            <td class="visibility: hidden" id="w7_cell"> <span id="w7_label">W7:</span> <span id="w7"></span> ms</td>
-            <td class="visibility: hidden" id="w8_cell"> <span id="w8_label">W8:</span> <span id="w8"></span> ms</td>
-            <td class="visibility: hidden" id="w9_cell"> <span id="w9_label">W9:</span> <span id="w9"></span> ms</td>
-            <td class="visibility: hidden" id="w10_cell"><span id="w10_label">W10:</span> <span id="w10"></span> ms</td>
-            <td class="visibility: hidden" id="w11_cell"><span id="w11_label">W11:</span> <span id="w11"></span> ms</td>
-          </tr>
-        </table>
-      </td></tr
-  <tr><td>Maximum iterations</td>
-      <td><input class="horizontal" id="max_iters" type="range">
-          <span id="max_iters_txt"></span></td></tr>
-  <tr><td>Zoom</td>
-      <td><input class="horizontal" id="zoom" type="range">
-          <span id="zoom_txt"></span></td></tr>
-  <tr><td colspan="2" style="text-align: center;">
-          <input id="reset_ui_button" type="button" value="Reset image"></td></tr>
-  <tr><td colspan="2">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
-  <tr><td colspan="2">Drag to move image</td></tr>
-  <tr><td colspan="2">
-          <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
-  <tr><td colspan="2">Julia set corresponding
-    to (<span id="x_complex_coord"></span>, <span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
-  <tr><td colspan="2">Julia set calculated in <span id="julia_exec_time"></span> ms</td></tr>
+  <tr><td colspan="3">
+        <table>
+        <tr><td>Web Workers</td>
+            <td><input class="horizontal" id="workers" type="range" min="1" max="12" step="1"></td>
+            <td><span id="workers_txt"></span></td></tr>
+        <tr><td>Maximum iterations</td>
+            <td><input class="horizontal" id="max_iters" type="range"></td>
+            <td><span id="max_iters_txt"></span></td></tr>
+        <tr><td>Zoom</td>
+            <td><input class="horizontal" id="zoom" type="range"></td>
+            <td><span id="zoom_txt"></span></td></tr>
+        <tr><td colspan="3" style="text-align: center;"><input id="reset_ui_button" type="button" value="Reset image"></td></tr>
+        </table></td></tr>
+  <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
+  <tr><td colspan="3">Drag to move image</td></tr>
+  <tr><td colspan="2"><canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
+      <td style="vertical-align: text-top;">
+          <table class="perf" border="0">
+          <tr><td class="narrow visible"id="w0_cell1">W0:</td><td><span id="w0"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w1_cell1">W1:</td><td id="w1_cell2"><span id="w1"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w2_cell1">W2:</td><td id="w2_cell2"><span id="w2"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w3_cell1">W3:</td><td id="w3_cell2"><span id="w3"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w4_cell1">W4:</td><td id="w4_cell2"><span id="w4"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w5_cell1">W5:</td><td id="w5_cell2"><span id="w5"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w6_cell1">W6:</td><td id="w6_cell2"><span id="w6"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w7_cell1">W7:</td><td id="w7_cell2"><span id="w7"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w8_cell1">W8:</td><td id="w8_cell2"><span id="w8"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w9_cell1">W9:</td><td id="w9_cell2"><span id="w9"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w10_cell1">W10:</td><td id="w10_cell2"><span id="w10"></span> ms</td></tr>
+          <tr><td class="narrow hidden" id="w11_cell1">W11:</td><td id="w11_cell2"><span id="w11"></span> ms</td></tr>
+          </table></td></tr>
+  <tr><td colspan="3">Julia set corresponding to (<span id="x_complex_coord"></span>,
+          <span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
+  <tr><td colspan="3">Julia set calculated in <span id="julia_exec_time"></span> ms</td></tr>
   <tr><td colspan="2">
     <canvas id="juliaImage" style="border: 1px solid black"></canvas></td></tr>
   </table>
@@ -68,7 +64,7 @@ const WASM_PAGE_SIZE = 1024 * 64
 
 // Range slider parameters
 const RANGE_WORKERS   = { MIN : 1,   MAX : 12,    STEP : 1,  DEFAULT : 4 }
-const RANGE_MAX_ITERS = { MIN : 100, MAX : 20000, STEP : 50, DEFAULT : 150 }
+const RANGE_MAX_ITERS = { MIN : 100, MAX : 10000, STEP : 50, DEFAULT : 150 }
 const RANGE_ZOOM      = { MIN : 100, MAX : 20000, STEP : 50, DEFAULT : 200 }
 
 const DEFAULT_CANVAS_WIDTH  = 800
@@ -280,7 +276,7 @@ const draw_fractal = f => {
 
   // Invoke all the workers
   window.worker_list.map((w, idx) => {
-    $id(`w${idx}_label`).style.backgroundColor = GREEN
+    $id(`w${idx}_cell1`).style.backgroundColor = GREEN
     w.postMessage(gen_worker_msg('exec', idx, f))
   })
 }
@@ -357,7 +353,7 @@ const worker_msg_handler =
         run_complete_count++
 
         // Update this worker's performance time
-        $id(`w${worker_id}_label`).style.backgroundColor = 'white'
+        $id(`w${worker_id}_cell1`).style.backgroundColor = 'white'
         $id(`w${worker_id}`).innerHTML = interval(times.exec)
 
         // Have all the workers finished yet?
@@ -427,7 +423,14 @@ const rebuild_workers = () => {
 
     // Create new set of workers
     for (let i=0; i<img_params.workers.currentValue; i++) {
-      $id(`w${i}_cell`).style.visibility = "visible"
+      // Worker 0 is always visible
+      if (i>0) {
+        $id(`w${i}_cell1`).classList.remove("hidden")
+        $id(`w${i}_cell2`).classList.remove("hidden")
+        $id(`w${i}_cell1`).classList.add("visible")
+        $id(`w${i}_cell2`).classList.add("visible")
+      }
+
       let w = new Worker('src/js/worker.js')
       window.worker_list.push(w)
 
@@ -435,13 +438,16 @@ const rebuild_workers = () => {
       w.onmessage = worker_msg_handler
 
       // Start worker and draw initial Mandelbrot Set
-      $id(`w${i}_label`).style.backgroundColor = GREEN
+      $id(`w${i}_cell1`).style.backgroundColor = GREEN
       w.postMessage(gen_worker_msg('init', i, 'mandel', host_fns))
     }
 
     // Switch off unused worker performance fields
     for (let i=img_params.workers.currentValue; i<RANGE_WORKERS.MAX; i++) {
-      $id(`w${i}_cell`).style.visibility = "hidden"
+      $id(`w${i}_cell1`).classList.remove("visible")
+      $id(`w${i}_cell2`).classList.remove("visible")
+      $id(`w${i}_cell1`).classList.add("hidden")
+      $id(`w${i}_cell2`).classList.add("hidden")
     }
   }
 }
