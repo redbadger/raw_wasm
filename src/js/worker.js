@@ -1,7 +1,7 @@
 const i32AsString = n => ((n1, sign) => `${sign}0x${n1.toString(16).padStart(8,'0')}`)(Math.abs(n), n < 0 ? '-' : '')
 
 const WASM_LOG_MSGS = [
-  { msg : "Mandelbrot: Pixel X,Y, value", asHex : [false, false, false] },
+  { msg : "Mandelbrot: Pixel X, Y, value", asHex : [false, false, false] },
   { msg : "Julia: Pixel X, Y, value",     asHex : [false, false, false] },
 ]
 
@@ -27,16 +27,6 @@ let times = {
  * Worker inbound message handler
  */
 onmessage = async ({ data }) => {
-  // data = {
-  //   action,                 // Task to be performed
-  //   payload                 // Payload specific for current task
-  // }
-  // payload = {
-  //    host_fns,              // Needed during initialisation
-  //    worker_id,             // Needed during initialisation
-  //    fractal,               // Details of the current fractal being plotted
-  //    max_iters
-  // }
   const { action, payload } = data
   let { host_fns, worker_id, fractal, max_iters } = payload
 
@@ -49,12 +39,13 @@ onmessage = async ({ data }) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     case 'init':
       my_worker_id = worker_id
-      times.init.start = performance.now()
 
-      // Supplement the host_fns object with objects that cannot be cloned (like functions)
+      // Supplement the host_fns object with objects that cannot be cloned (such as functions)
       host_fns.js.log3 = logger
 
+      times.init.start = performance.now()
       const wasmObj = await WebAssembly.instantiateStreaming(fetch('../../build/mj_plot-3.wasm'), host_fns)
+      times.init.end = performance.now()
 
       mandel_plot = wasmObj.instance.exports.mandel_plot
       julia_plot  = wasmObj.instance.exports.julia_plot
@@ -63,7 +54,6 @@ onmessage = async ({ data }) => {
       // The colour palette calculation does not need to be distributed across mulitple workers
       // This task is performed only by worker 0
       if (worker_id === 0) {
-        console.log("Worker 0: Calculating colour palette")
         paletteFn(max_iters)
       }
 
@@ -84,7 +74,6 @@ onmessage = async ({ data }) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // max_iters has changed
     case 'refresh_colour_palette':
-      console.log(`Worker ${my_worker_id}: Refreshing colour palette for new max_iters = ${max_iters}`)
       paletteFn(max_iters)
       break
 
@@ -92,7 +81,7 @@ onmessage = async ({ data }) => {
     case 'exec':
       times.exec.start = performance.now()
 
-      switch(payload.fractal.name) {
+      switch(fractal.name) {
         case "mandel":
           mandel_plot(
             fractal.width,    fractal.height,

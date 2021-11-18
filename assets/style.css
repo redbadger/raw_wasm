@@ -14,3 +14,10 @@ h1 {
   width: 176px;
   height: 44px;
 }
+
+[type="range"].horizontal {
+  width: 400px
+}
+
+td.hidden  { visibility: hidden; }
+td.visible { visibility: visible; }

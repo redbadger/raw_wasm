@@ -2,61 +2,55 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Writing in Raw WebAssembly Text</title>
+<title>Plotting Fractals Using WebAssembly Threads and Web Workers</title>
 <link rel="stylesheet" href="./assets/style.css"charset="utf8">
-<style>
-[type="range"].horizontal {
-  width: 400px
-}
-td.hidden  { visibility: hidden; }
-td.visible { visibility: visible; }
-</style>
 </head>
 <body>
   <table>
   <tr><td><a href="https://red-badger.com" target="_new"><img class="rb_logo" src="./assets/red-badger.svg"/></a></td>
-      <td></td>
-      <td><a href="https://github.com/redbadger/raw_wasm" target="_new">Git Repository</a></td></tr>
-  <tr><td colspan="3">
-      <h1 class="heading">Plotting Fractals Using WebAssembly Threads and WebWorkers</h1></td></tr>
+      <td style="text-align: right;">
+          <a href="https://github.com/redbadger/raw_wasm" target="_new">Git Repository</a></td></tr>
+  <tr><td colspan="2">
+      <h1 class="heading">Plotting Fractals Using WebAssembly Threads and Web Workers</h1></td></tr>
   <tr><td>Web Workers</td>
-      <td><input class="horizontal" id="workers" type="range" min="1" max="12" step="1"></td>
-      <td><span id="workers_txt"></span></td></tr>
-  <!-- tr><td>Web Worker performance</td>
-      <td colspan="2">
-        <table style="width: 45em; table-layout: fixed;" border="0" cellpadding="3" cellspacing="0">
+      <td><input class="horizontal" id="workers" type="range" min="1" max="12" step="1">
+          <span id="workers_txt"></span></td></tr>
+  <tr><td>Web Worker performance</td>
+      <td>
+        <table style="width: 46em; table-layout: fixed;" border="0" cellpadding="3" cellspacing="0">
           <tr>
-            <td style="visibility : hidden" id="w0_cell">W0: <span id="w0"></span> ms</td>
-            <td class="visibility : hidden" id="w1_cell">W1: <span id="w1"></span> ms</td>
-            <td class="visibility : hidden" id="w2_cell">W2: <span id="w2"></span> ms</td>
-            <td class="visibility : hidden" id="w3_cell">W3: <span id="w3"></span> ms</td>
-            <td class="visibility : hidden" id="w4_cell">W4: <span id="w4"></span> ms</td>
-            <td class="visibility : hidden" id="w5_cell">W5: <span id="w5"></span> ms</td></tr>
+            <td style="visibility : hidden" id="w0_cell"><span id="w0_label">W0:</span> <span id="w0"></span> ms</td>
+            <td class="visibility : hidden" id="w1_cell"><span id="w1_label">W1:</span> <span id="w1"></span> ms</td>
+            <td class="visibility : hidden" id="w2_cell"><span id="w2_label">W2:</span> <span id="w2"></span> ms</td>
+            <td class="visibility : hidden" id="w3_cell"><span id="w3_label">W3:</span> <span id="w3"></span> ms</td>
+            <td class="visibility : hidden" id="w4_cell"><span id="w4_label">W4:</span> <span id="w4"></span> ms</td>
+            <td class="visibility : hidden" id="w5_cell"><span id="w5_label">W5:</span> <span id="w5"></span> ms</td></tr>
           <tr>
-            <td class="visibility: hidden" id="w6_cell">W6:  <span id="w6"></span> ms</td>
-            <td class="visibility: hidden" id="w7_cell">W7:  <span id="w7"></span> ms</td>
-            <td class="visibility: hidden" id="w8_cell">W8:  <span id="w8"></span> ms</td>
-            <td class="visibility: hidden" id="w9_cell">W9:  <span id="w9"></span> ms</td>
-            <td class="visibility: hidden" id="w10_cell">W10: <span id="w10"></span> ms</td>
-            <td class="visibility: hidden" id="w11_cell">W11: <span id="w11"></span> ms</td>
+            <td class="visibility: hidden" id="w6_cell"> <span id="w6_label">W6:</span> <span id="w6"></span> ms</td>
+            <td class="visibility: hidden" id="w7_cell"> <span id="w7_label">W7:</span> <span id="w7"></span> ms</td>
+            <td class="visibility: hidden" id="w8_cell"> <span id="w8_label">W8:</span> <span id="w8"></span> ms</td>
+            <td class="visibility: hidden" id="w9_cell"> <span id="w9_label">W9:</span> <span id="w9"></span> ms</td>
+            <td class="visibility: hidden" id="w10_cell"><span id="w10_label">W10:</span> <span id="w10"></span> ms</td>
+            <td class="visibility: hidden" id="w11_cell"><span id="w11_label">W11:</span> <span id="w11"></span> ms</td>
           </tr>
         </table>
-      </td></tr -->
+      </td></tr
   <tr><td>Maximum iterations</td>
-      <td><input class="horizontal" id="max_iters" type="range" min="100" max="10000" value="1000"></td>
-      <td><span id="max_iters_txt"></span></td></tr>
+      <td><input class="horizontal" id="max_iters" type="range">
+          <span id="max_iters_txt"></span></td></tr>
   <tr><td>Zoom</td>
-      <td><input class="horizontal" id="zoom" type="range" min="100" max="10000" value="200"></td>
-      <td><span id="zoom_txt"></span></td></tr>
-  <tr><td colspan="3" style="text-align: center;"><input id="reset_ui_button" type="button" value="Reset image"></td></tr>
-  <tr><td colspan="3">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
-  <tr><td colspan="3">Drag to move image</td></tr>
-  <tr><td colspan="3">
+      <td><input class="horizontal" id="zoom" type="range">
+          <span id="zoom_txt"></span></td></tr>
+  <tr><td colspan="2" style="text-align: center;">
+          <input id="reset_ui_button" type="button" value="Reset image"></td></tr>
+  <tr><td colspan="2">Mandelbrot set calculation time <span id="mandel_exec_time"></span> ms</td></tr>
+  <tr><td colspan="2">Drag to move image</td></tr>
+  <tr><td colspan="2">
           <canvas id="mandelImage" style="border: 1px solid black"></canvas></td>
-  <tr><td colspan="3">Julia set corresponding
-    to (<span id="x_complex_coord"></span>,<span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
-  <tr><td colspan="3">Julia set calculated in <span id="julia_exec_time"></span> ms</td></tr>
-  <tr><td colspan="3">
+  <tr><td colspan="2">Julia set corresponding
+    to (<span id="x_complex_coord"></span>, <span id="y_complex_coord"></span>) on the Mandelbrot set</td></tr>
+  <tr><td colspan="2">Julia set calculated in <span id="julia_exec_time"></span> ms</td></tr>
+  <tr><td colspan="2">
     <canvas id="juliaImage" style="border: 1px solid black"></canvas></td></tr>
   </table>
 <script type="module">
@@ -68,19 +62,21 @@ const interval       = time => microPrecision(time.end - time.start)
 /* ---------------------------------------------------------------------------------------------------------------------
  * Defaults and constants
  */
+const GREEN = '#00CC66'
+
 const WASM_PAGE_SIZE = 1024 * 64
 
-const DEFAULT_WORKERS       = 4
-const DEFAULT_WORKERS_MAX   = 12
+// Range slider parameters
+const RANGE_WORKERS   = { MIN : 1,   MAX : 12,    STEP : 1,  DEFAULT : 4 }
+const RANGE_MAX_ITERS = { MIN : 100, MAX : 20000, STEP : 50, DEFAULT : 150 }
+const RANGE_ZOOM      = { MIN : 100, MAX : 20000, STEP : 50, DEFAULT : 200 }
+
 const DEFAULT_CANVAS_WIDTH  = 800
 const DEFAULT_CANVAS_HEIGHT = 450
-const DEFAULT_PPU           = 200              // Default pixels per unit (controls zoom level)
-const DEFAULT_ZOOM_STEP     = 50               // Default slider step interval
-const DEFAULT_ORIGIN_STEP   = 0.01             // Step interval when Mandelbrot Set is dragged
-const DEFAULT_ORIGIN_X      = -0.5             // Centre X canvas pixel in the Mandelbrot coordinate space
-const DEFAULT_ORIGIN_Y      = 0                // Centre Y canvas pixel in the Mandelbort coordinate space
-const DEFAULT_MAX_ITERS     = 150              // Default number of iterations for the escape time algorithm
-const DEFAULT_ITERS_STEP    = 50               // Default slider step interval
+
+const DEFAULT_ORIGIN_STEP = 0.01               // Step size for dragging the Mandelbrot Set
+const DEFAULT_ORIGIN_X    = -0.5               // Centre X canvas pixel in the Mandelbrot coordinate space
+const DEFAULT_ORIGIN_Y    = 0                  // Centre Y canvas pixel in the Mandelbort coordinate space
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * For the fractal calculation to be distributed between worker threads, the index of the pixel being calculated must be
@@ -95,6 +91,12 @@ const COUNTERS_LEN = 8
  * Mouse handler functions
  */
 let drag_active = false
+
+/*
+ * Mouse up/down events within the Mandelbrot set
+ */
+const mouse_down = _ => drag_active = true
+const mouse_up   = _ => drag_active = false
 
 /*
  * Partial function to translate the mouse X or Y canvas position to the corresponding X or Y coordinate in the complex
@@ -118,6 +120,9 @@ const mouse_track = evt => {
   let x_pxl = offset_to_clamped_pos(evt.offsetX, evt.target.width,  evt.target.offsetWidth)
   let y_pxl = offset_to_clamped_pos(evt.offsetY, evt.target.height, evt.target.offsetHeight)
 
+  img_params.mandel_x.currentValue = x_pxl
+  img_params.mandel_y.currentValue = y_pxl
+
   $id('x_complex_coord').innerHTML = window.mandel_x_pos_to_coord(x_pxl)
   $id('y_complex_coord').innerHTML = window.mandel_y_pos_to_coord(y_pxl) * -1
 
@@ -128,33 +133,8 @@ const mouse_track = evt => {
 
     update_img(evt)
   } else {
-    jSet.origin_x = img_params.origin_x.currentValue
-    jSet.origin_y = img_params.origin_y.currentValue
-    jSet.mandel_x = x_pxl
-    jSet.mandel_y = y_pxl
-    jSet.zoom     = img_params.zoom.currentValue
-
-    draw_fractal(jSet)
+    draw_fractal('julia')
   }
-}
-
-/*
- * Mouse up/down events within the Mandelbrot set
- */
-const mouse_down = _ => drag_active = true
-const mouse_up   = _ => drag_active = false
-
-/* ---------------------------------------------------------------------------------------------------------------------
- * Generic fractal object
- */
-function Fractal(name, canvas) {
-  this.name     = name
-  this.canvas   = canvas
-  this.origin_x = DEFAULT_ORIGIN_X
-  this.origin_y = DEFAULT_ORIGIN_Y
-  this.mandel_x = 0
-  this.mandel_y = 0
-  this.zoom     = DEFAULT_PPU
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
@@ -175,7 +155,6 @@ const mImageSize  = mCanvas.width * mCanvas.height * 4
 const mImagePages = Math.ceil(mImageSize / WASM_PAGE_SIZE)
 const mImageStart = COUNTERS_LEN
 const mImageEnd   = mImageStart + mImageSize
-const mSet        = new Fractal("mandel", mCanvas)
 
 const jCanvas  = $id('juliaImage')
 jCanvas.width  = DEFAULT_CANVAS_WIDTH
@@ -187,7 +166,6 @@ const jImageSize  = jCanvas.width * jCanvas.height * 4
 const jImagePages = Math.ceil(jImageSize / WASM_PAGE_SIZE)
 const jImageStart = mImagePages * WASM_PAGE_SIZE
 const jImageEnd   = jImageStart + jImageSize
-const jSet        = new Fractal("julia", jCanvas)
 
 /* ---------------------------------------------------------------------------------------------------------------------
 * Allocate WASM memory
@@ -209,14 +187,28 @@ const wasmMemory = (totalMemPages => new WebAssembly.Memory({
 const wasmMemBuff = new Uint8ClampedArray(wasmMemory.buffer)
 
 /* ---------------------------------------------------------------------------------------------------------------------
- * Current state of Mandelbrot image
+ * Initial and current states of Mandelbrot image
  */
 let img_params = {
-  'workers' :   { currentValue : DEFAULT_WORKERS,   defaultValue : DEFAULT_WORKERS,   hasSlider : true },
-  'zoom' :      { currentValue : DEFAULT_PPU,       defaultValue : DEFAULT_PPU,       hasSlider : true },
-  'max_iters' : { currentValue : DEFAULT_MAX_ITERS, defaultValue : DEFAULT_MAX_ITERS, hasSlider : true },
+  'workers' : {
+    currentValue : RANGE_WORKERS.DEFAULT,
+    defaultValue : RANGE_WORKERS.DEFAULT,
+    hasSlider : true
+  },
+  'zoom' : {
+    currentValue : RANGE_ZOOM.DEFAULT,
+    defaultValue : RANGE_ZOOM.DEFAULT,
+    hasSlider : true
+  },
+  'max_iters' : {
+    currentValue : RANGE_MAX_ITERS.DEFAULT,
+    defaultValue : RANGE_MAX_ITERS.DEFAULT,
+    hasSlider : true
+  },
   'origin_x' :  { currentValue : DEFAULT_ORIGIN_X,  defaultValue : DEFAULT_ORIGIN_X,  hasSlider : false },
   'origin_y' :  { currentValue : DEFAULT_ORIGIN_Y,  defaultValue : DEFAULT_ORIGIN_Y,  hasSlider : false },
+  'mandel_x' :  { currentValue : 0,                 defaultValue : 0,                 hasSlider : false },
+  'mandel_y' :  { currentValue : 0,                 defaultValue : 0,                 hasSlider : false },
 }
 
 /*
@@ -250,53 +242,35 @@ const update_img_params = sId => {
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
- * Draw the required fractal
+ * Generate a worker message object
  */
-const gen_worker_msg_rcp = () => ({
-  action  : 'refresh_colour_palette',
-  payload : {
-    max_iters : img_params.max_iters.currentValue,
-  },
-})
+const gen_worker_msg =
+  (p_action, p_worker_id, p_fractal, p_host_fns) => {
+    let response = {
+      action : p_action,
+      payload : {
+        host_fns : {},
+        fractal : {
+          name     : p_fractal,
+          width    : DEFAULT_CANVAS_WIDTH,
+          height   : DEFAULT_CANVAS_HEIGHT,
+          zoom     : img_params.zoom.currentValue,
+          origin_x : img_params.origin_x.currentValue,
+          origin_y : img_params.origin_y.currentValue,
+          mandel_x : img_params.mandel_x.currentValue,
+          mandel_y : img_params.mandel_y.currentValue,
+        },
+        max_iters : img_params.max_iters.currentValue,
+        worker_id : p_worker_id,
+      },
+    }
 
-const gen_worker_msg_init = (host_fns, worker_id) => ({
-  action  : 'init',
-  payload : {
-    host_fns  : host_fns,
-    worker_id : worker_id,
-    fractal : {
-      name     : "mandel",
-      width    : DEFAULT_CANVAS_WIDTH,
-      height   : DEFAULT_CANVAS_HEIGHT,
-      origin_x : DEFAULT_ORIGIN_X,
-      origin_y : DEFAULT_ORIGIN_Y,
-      zoom     : DEFAULT_PPU,
-    },
-    max_iters : DEFAULT_MAX_ITERS,
-  },
-})
+    if (p_host_fns) response.payload.host_fns = p_host_fns
 
-const gen_worker_msg_exec = f => ({
-  action  : 'exec',
-  payload : {
-    fractal : {
-      name     : f.name,
-      width    : f.canvas.width,
-      height   : f.canvas.height,
-      origin_x : f.origin_x,
-      origin_y : f.origin_y,
-      mandel_x : f.mandel_x,
-      mandel_y : f.mandel_y,
-      zoom     : f.zoom,
-    },
-    max_iters : img_params.max_iters.currentValue,
-  },
-})
+    return response
+  }
 
-let plot_time = {}
-
-plot_time.start = 0
-plot_time.end   = 0
+let plot_time = { start : 0, end : 0 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Draw the selected fractal
@@ -305,28 +279,25 @@ const draw_fractal = f => {
   plot_time.start = window.performance.now()
 
   // Invoke all the workers
-  window.worker_list.map(w => w.postMessage(gen_worker_msg_exec(f)))
+  window.worker_list.map((w, idx) => {
+    $id(`w${idx}_label`).style.backgroundColor = GREEN
+    w.postMessage(gen_worker_msg('exec', idx, f))
+  })
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Update the Mandelbrot Set image as it is dragged or zoomed
  */
 const update_img = evt => {
-  img_params = Object
-    .keys(img_params)
-    .reduce((acc, sId) => { acc[sId] = update_img_params(sId); return acc }, {})
-
-  mSet.origin_x = img_params.origin_x.currentValue
-  mSet.origin_y = img_params.origin_y.currentValue
-  mSet.zoom     = img_params.zoom.currentValue
+  img_params = Object.keys(img_params).reduce((acc, sId) => { acc[sId] = update_img_params(sId); return acc }, {})
 
   switch(evt.target.id) {
     // Rebuild the colour palette
     case "max_iters":
       // Colour palette calculation is performed only by worker 0
-      window.worker_list[0].postMessage(gen_worker_msg_rcp())
+      window.worker_list[0].postMessage(gen_worker_msg('refresh_colour_palette', 0))
 
-      draw_fractal(jSet)
+      draw_fractal('julia')
       break
 
     // Whenever the origin moves, the pixel-to-coordinate translation functions must be updated
@@ -334,42 +305,36 @@ const update_img = evt => {
     case "origin_x":
     case "origin_y":
     case "mandelImage":
-      window.mandel_x_pos_to_coord = canvas_pxl_to_coord(mSet.canvas.width,  img_params.zoom.currentValue, mSet.origin_x)
-      window.mandel_y_pos_to_coord = canvas_pxl_to_coord(mSet.canvas.height, img_params.zoom.currentValue, mSet.origin_y)
+      window.mandel_x_pos_to_coord = canvas_pxl_to_coord(
+        DEFAULT_CANVAS_WIDTH,
+        img_params.zoom.currentValue,
+        img_params.origin_x.currentValue
+      )
+      window.mandel_y_pos_to_coord = canvas_pxl_to_coord(
+        DEFAULT_CANVAS_HEIGHT,
+        img_params.zoom.currentValue,
+        img_params.origin_y.currentValue
+      )
       break
 
     default:
   }
 
-  draw_fractal(mSet)
+  draw_fractal('mandel')
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Initial starting point for UI
  */
  const resetUI = (evt, isInitial) => {
-  window.mandel_x_pos_to_coord = canvas_pxl_to_coord(mSet.canvas.width,  DEFAULT_PPU, DEFAULT_ORIGIN_X)
-  window.mandel_y_pos_to_coord = canvas_pxl_to_coord(mSet.canvas.height, DEFAULT_PPU, DEFAULT_ORIGIN_Y)
+  window.mandel_x_pos_to_coord = canvas_pxl_to_coord(DEFAULT_CANVAS_WIDTH,  RANGE_ZOOM.DEFAULT, DEFAULT_ORIGIN_X)
+  window.mandel_y_pos_to_coord = canvas_pxl_to_coord(DEFAULT_CANVAS_HEIGHT, RANGE_ZOOM.DEFAULT, DEFAULT_ORIGIN_Y)
 
   img_params = Object.keys(img_params).reduce((acc, sId) => { acc[sId] = reset_img_params(sId); return acc }, {})
 
-  mSet.origin_x = DEFAULT_ORIGIN_X
-  mSet.origin_y = DEFAULT_ORIGIN_Y
-  mSet.zoom     = DEFAULT_PPU
+  rebuild_workers()
 
-  if (!isInitial) draw_fractal(mSet)
-}
-
-/*
- * Functions that are either supplied to WASM by the host environment or are shared between WASM modules
- */
-const host_fns = {
-  js : {
-    shared_mem        : wasmMemory,
-    mandel_img_offset : COUNTERS_LEN,
-    julia_img_offset  : WASM_PAGE_SIZE * mImagePages,
-    palette_offset    : WASM_PAGE_SIZE * (mImagePages + jImagePages),
-  }
+  if (!isInitial) draw_fractal('mandel')
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
@@ -391,6 +356,11 @@ const worker_msg_handler =
       case 'exec_complete':
         run_complete_count++
 
+        // Update this worker's performance time
+        $id(`w${worker_id}_label`).style.backgroundColor = 'white'
+        $id(`w${worker_id}`).innerHTML = interval(times.exec)
+
+        // Have all the workers finished yet?
         if (run_complete_count === img_params.workers.currentValue) {
           plot_time.end = performance.now()
 
@@ -410,11 +380,6 @@ const worker_msg_handler =
             default:
           }
 
-          // Update worker performance times
-          // for (let i=0; i<img_params.workers.currentValue; i++) {
-          //   $id(`w${i}`).innerHTML = interval(times.exec)
-          // }
-
           // Reset X,Y iteration counters in shared memory
           for (let i=0; i<COUNTERS_LEN; i++) {
             wasmMemBuff[i] = 0x0
@@ -426,6 +391,18 @@ const worker_msg_handler =
       default:
     }
   })
+
+/*
+ * Any values of functions imported by WASM from the host environment go here
+ */
+ const host_fns = {
+  js : {
+    shared_mem        : wasmMemory,
+    mandel_img_offset : COUNTERS_LEN,
+    julia_img_offset  : WASM_PAGE_SIZE * mImagePages,
+    palette_offset    : WASM_PAGE_SIZE * (mImagePages + jImagePages),
+  }
+}
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Build required number of worker threads
@@ -450,7 +427,7 @@ const rebuild_workers = () => {
 
     // Create new set of workers
     for (let i=0; i<img_params.workers.currentValue; i++) {
-      // $id(`w${i}_cell`).style.visibility = "visible"
+      $id(`w${i}_cell`).style.visibility = "visible"
       let w = new Worker('src/js/worker.js')
       window.worker_list.push(w)
 
@@ -458,13 +435,14 @@ const rebuild_workers = () => {
       w.onmessage = worker_msg_handler
 
       // Start worker and draw initial Mandelbrot Set
-      w.postMessage(gen_worker_msg_init(host_fns, i))
+      $id(`w${i}_label`).style.backgroundColor = GREEN
+      w.postMessage(gen_worker_msg('init', i, 'mandel', host_fns))
     }
 
     // Switch off unused worker performance fields
-    // for (let i=img_params.workers.currentValue; i<DEFAULT_WORKERS_MAX; i++) {
-    //   $id(`w${i}_cell`).style.visibility = "hidden"
-    // }
+    for (let i=img_params.workers.currentValue; i<RANGE_WORKERS.MAX; i++) {
+      $id(`w${i}_cell`).style.visibility = "hidden"
+    }
   }
 }
 
@@ -475,19 +453,23 @@ let workers_slider   = $id("workers")
 let zoom_slider      = $id("zoom")
 let max_iters_slider = $id("max_iters")
 
-  workers_slider.value = DEFAULT_WORKERS
-  workers_slider.max   = DEFAULT_WORKERS_MAX
+  workers_slider.max   = RANGE_WORKERS.MAX
+  workers_slider.min   = RANGE_WORKERS.MIN
+  workers_slider.value = RANGE_WORKERS.DEFAULT
   workers_slider.addEventListener("input", rebuild_workers, false)
 
-  zoom_slider.step = DEFAULT_ZOOM_STEP
+  zoom_slider.min  = RANGE_ZOOM.MIN
+  zoom_slider.max  = RANGE_ZOOM.MAX
+  zoom_slider.step = RANGE_ZOOM.STEP
   zoom_slider.addEventListener("input", update_img, false)
 
-  max_iters_slider.step = DEFAULT_ITERS_STEP
+  max_iters_slider.min  = RANGE_MAX_ITERS.MIN
+  max_iters_slider.max  = RANGE_MAX_ITERS.MAX
+  max_iters_slider.step = RANGE_MAX_ITERS.STEP
   max_iters_slider.addEventListener("input", update_img, false)
 
   $id("reset_ui_button").addEventListener("click", resetUI, false)
 
-  rebuild_workers({}, DEFAULT_WORKERS)
   resetUI({}, true)
 </script>
 </body>
