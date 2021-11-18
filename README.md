@@ -24,14 +24,6 @@ This was a learning exercise with the following objectives:
 
 Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`; but this has now been reduced to a single module `mj_plot.wasm`.
 
-> ### Testing
-> 
-> During development, it was necessary to test the functions exported from each WASM library.
-> So I developed a small test framework that picks up a WASM module and attempts to find a test for every exported function.
-> It then reports on whether or not a test was found, and if so, reports the test outcome.
-> 
-> This code is still present in the repo but has been removed from `index.html`.
-
 ## Implementation
 
 [Live demo](https://raw-wasm.pages.dev/)
