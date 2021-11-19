@@ -22,7 +22,9 @@ This was a learning exercise with the following objectives:
 1. Learn to use WebAssembly threads
 1. Learn how the optimizer tool `wasm-opt` reduces a WASM file size then apply those techniques when first writing the code
 
-Originally, three WASM modules were developed: `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm`; but this has now been reduced to a single module `mj_plot.wasm`.
+Although it is perfectly possible for WASM functions to invoke other WASM function in external libraries, this incurs a performance cost since the call must first be passed to the environment in which WASM is hosted (in this case, that environment is JavaScript), then the host environment forwards the call to the  other WASM module instance.
+
+After initially getting this architecture to work, it was set aside in favour of the all-in-one-module approach.  This decision was taken entirely on the basis that this app is primarily concerned with performance, not code reusability.  Hence, the original three WASM modules `mandel.wasm`, `colour_palette.wasm` and `canvas.wasm` have been condensed into a single module `mj_plot.wasm`.
 
 ## Implementation
 
@@ -40,6 +42,12 @@ By moving the sliders, you can change the following parameters of the Mandelbrot
    The number of Web Works can be varied in order to compare performance times.
    Each time this value is changed, the Web Worker collection is thrown away and rebuilt.
 
+   One set of Web Workers are used to calculate both the Mandelbrot and Julia Set images.
+
+   The execution time of each Web Worker is shown down the right side of the Mandelbrot Set canvas.
+   The Web Worker name is given a green background when that worker is active.
+
+
 * ***Maximum Iterations***  
    The maximum number of times the escape time algorithm is run to calculate a pixel's value.
    The higher this value, the longer the escape time algorithm will take to run.
@@ -56,9 +64,14 @@ Several options are available here, but I have developed this app using the WebA
 
 > ***IMPORTANT***
 > 
-> 1. Due to the fact that these WebAssembly programs access shared memory using atomic read-modify-write instructions, they must be compiled with the `--enable-threads` option when running both `wat2wasm` and `wasm-opt`
+> 1. Due to the fact that multiple instances of the same WebAssembly module access shared memory using atomic read-modify-write instructions, they must be compiled with the `--enable-threads` option when running both `wat2wasm` and `wasm-opt`
 > 
 > 1. If you'd like to run this app locally, you will need to modify your Web Server configuration such that the server responds with these headers:
+> 
+>    ```
+>    Cross-Origin-Embedder-Policy: require-corp
+>    Cross-Origin-Opener-Policy: same-origin
+>    ```
 >
 >   For instance, if you use Apache as your Web server, then in `httpd.conf`, you will need to modify the `headers_module` section:
 > 
@@ -72,8 +85,8 @@ Several options are available here, but I have developed this app using the WebA
 >   Restart your Web Server
 
 
-1. Clone the repo into a directory accesible from a Web Server.
-This is necessary because browsers typically do not allow WebAssembly modules to be transfered using the `file://` protocol.
+1. Clone the repo into a directory accesible from your Web Server.
+This is necessary because browsers do not allow WebAssembly modules to be transfered using the `file://` protocol.
 1. Assuming you have the tools `wat2wasm` and `wasm-opt` installed, run `make` followed by `make opt`
 1. Point your browser to `index.html`
 1. As you move the mouse pointer over the Mandelbrot Set, the Julia Set corresponding to that location will be rendered in the canvas below
