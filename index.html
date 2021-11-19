@@ -266,19 +266,24 @@ const gen_worker_msg =
     return response
   }
 
-let plot_time = { start : 0, end : 0 }
+let plot_time = { start : 0, end : 0, wCount : 0, isActive : false }
 
 /* ---------------------------------------------------------------------------------------------------------------------
  * Draw the selected fractal
  */
 const draw_fractal = f => {
-  plot_time.start = window.performance.now()
+  // Do not start a new plot if one is already running
+  if (!plot_time.isActive) {
+    plot_time.wCount   = 0
+    plot_time.isActive = true
+    plot_time.start    = window.performance.now()
 
-  // Invoke all the workers
-  window.worker_list.map((w, idx) => {
-    $id(`w${idx}_cell1`).style.backgroundColor = GREEN
-    w.postMessage(gen_worker_msg('exec', idx, f))
-  })
+    // Invoke all the workers
+    window.worker_list.map((w, idx) => {
+      $id(`w${idx}_cell1`).style.backgroundColor = GREEN
+      w.postMessage(gen_worker_msg('exec', idx, f))
+    })
+  }
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------
@@ -336,12 +341,8 @@ const update_img = evt => {
 /* ---------------------------------------------------------------------------------------------------------------------
  * Worker thread message handler
  */
-let run_complete_count = 0
-
 const worker_msg_handler =
-  (({ data }) => {
-    // data = { status, payload }
-    // payload = { worker_id, fractal, times }
+  ({ data }) => {
     const { status, payload } = data
     const { worker_id, fractal, times } = payload
 
@@ -350,14 +351,14 @@ const worker_msg_handler =
       // Worker execution complete
       // payload = { worker_id, fractal, times }
       case 'exec_complete':
-        run_complete_count++
+        plot_time.wCount += 1
 
         // Update this worker's performance time
         $id(`w${worker_id}_cell1`).style.backgroundColor = 'white'
         $id(`w${worker_id}`).innerHTML = interval(times.exec)
 
         // Have all the workers finished yet?
-        if (run_complete_count === img_params.workers.currentValue) {
+        if (plot_time.wCount === img_params.workers.currentValue) {
           plot_time.end = performance.now()
 
           $id(`${fractal}_exec_time`).innerHTML = interval(plot_time)
@@ -381,12 +382,13 @@ const worker_msg_handler =
             wasmMemBuff[i] = 0x0
           }
 
-          run_complete_count = 0
+          plot_time.wCount   = 0
+          plot_time.isActive = false
         }
 
       default:
     }
-  })
+  }
 
 /*
  * Any values of functions imported by WASM from the host environment go here
