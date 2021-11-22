@@ -10,8 +10,8 @@ Two of the key advantages of writing in raw WebAssembly Text (WAT) are that you 
 Some would argue that us humans need not concern ourselves too deeply with these tasks because modern compilers are efficient enough to relieve us of this particular workload.
 Well, maybe, kind of &mdash; but no, not really.
 
-By writing the numerically intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the generated WASM binary files down to just under 1Kb!
-However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is 116 times larger at just over 74Kb.
+By writing the numerically intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the generated WASM binary files down to just 940 bytes!
+However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is just over 74Kb (116 times larger).
 
 ## Objectives
 

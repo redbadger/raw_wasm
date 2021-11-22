@@ -26,47 +26,46 @@
     (local $new_x f64)
     (local $new_y f64)
 
-    (loop $repeat
-      (block $quit
-        ;; Quit the loop if we have either exceeded the bailout value or hit the iteration limit
-        (br_if $quit
-          (i32.or
-              (f64.gt
-                ;; ($x^2 + $y^2) > $BAILOUT?
-                (f64.add
-                  (f64.mul (local.get $x) (local.get $x))
-                  (f64.mul (local.get $y) (local.get $y))
-                )
-                (global.get $BAILOUT)
-              )
-              ;; $iters >= max_iters?
-              (i32.ge_u (local.get $iters) (local.get $max_iters))
-          )
-        )
-
-        ;; $new_x = $mandel_x + ($x^2 - $y^2)
-        (local.set
-          $new_x
-          (f64.add
-            (local.get $mandel_x)
-            (f64.sub
+    (loop $next_iter
+      ;; Continue the loop only if we're still within both the bailout value and the iteration limit
+      (if
+        (i32.and
+          (f64.gt
+            ;; $BAILOUT > ($x^2 + $y^2)?
+            (global.get $BAILOUT)
+            (f64.add
               (f64.mul (local.get $x) (local.get $x))
               (f64.mul (local.get $y) (local.get $y))
             )
           )
+          ;; $max_iters > iters?
+          (i32.gt_u (local.get $max_iters) (local.get $iters))
         )
-        ;; $new_y = $mandel_y + ($y * 2 * $x)
-        (local.set
-          $new_y
-          (f64.add (local.get $mandel_y)
-                   (f64.mul (local.get $y) (f64.add (local.get $x) (local.get $x)))
+        (then
+          ;; $new_x = $mandel_x + ($x^2 - $y^2)
+          (local.set
+            $new_x
+            (f64.add
+              (local.get $mandel_x)
+              (f64.sub
+                (f64.mul (local.get $x) (local.get $x))
+                (f64.mul (local.get $y) (local.get $y))
+              )
+            )
           )
-        )
-        (local.set $x     (local.get $new_x))
-        (local.set $y     (local.get $new_y))
-        (local.set $iters (i32.add (local.get $iters) (i32.const 1)))
+          ;; $new_y = $mandel_y + ($y * 2 * $x)
+          (local.set
+            $new_y
+            (f64.add (local.get $mandel_y)
+                     (f64.mul (local.get $y) (f64.add (local.get $x) (local.get $x)))
+            )
+          )
+          (local.set $x     (local.get $new_x))
+          (local.set $y     (local.get $new_y))
+          (local.set $iters (i32.add (local.get $iters) (i32.const 1)))
 
-        br $repeat
+          br $next_iter
+        )
       )
     )
 
@@ -95,31 +94,32 @@
     (local.set $q (f64.add (f64.mul (local.get $x_minus_qtr) (local.get $x_minus_qtr)) (local.get $y_sqrd)))
 
     ;; Can we avoid running the escape time calculation?
-    (i32.or
-      ;; Is point in main cardioid?
-      ;; $q * ($q + ($x - 0.25)) <= $y^2 / 4
-      (f64.le
-        (f64.mul (local.get $q) (f64.add (local.get $q) (local.get $x_minus_qtr)))
-        (f64.mul (f64.const 0.25) (local.get $y_sqrd))
-      )
-      ;; Is point in period-2 bulb?
-      ;; ($x + 1)^2 + $y^2 <= 0.0625
-      (f64.le
-        (f64.add
-          (f64.mul (local.get $x_plus_1) (local.get $x_plus_1))
-          (f64.mul (local.get $y) (local.get $y))
+    (if (result i32)
+      ;; Is point in either the main cardioid or the period-2 bulb?
+      (i32.or
+        ;; Main cardioid check: $q * ($q + ($x - 0.25)) <= $y^2 / 4
+        (f64.le
+          (f64.mul (local.get $q) (f64.add (local.get $q) (local.get $x_minus_qtr)))
+          (f64.mul (f64.const 0.25) (local.get $y_sqrd))
         )
-        (f64.const 0.0625)
+        ;; Period-2 bulb check: ($x + 1)^2 + $y^2 <= 0.0625
+        (f64.le
+          (f64.add
+            (f64.mul (local.get $x_plus_1) (local.get $x_plus_1))
+            (f64.mul (local.get $y) (local.get $y))
+          )
+          (f64.const 0.0625)
+        )
+      )
+      (then
+        ;; Yup, so no need to run the escape time algorithm
+        (local.get $max_iters)
+      )
+      (else
+        ;; Nope, so round we go...
+        (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
       )
     )
-
-    i32.eqz
-
-    if (result i32)
-      (call $escape_time_mj (local.get $x) (local.get $y) (f64.const 0) (f64.const 0) (local.get $max_iters))
-    else
-      (local.get $max_iters)
-    end
   )
 
   ;; -------------------------------------------------------------------------------------------------------------------
@@ -161,52 +161,52 @@
     (local.set $temp_y_coord (f64.sub (local.get $origin_y) (f64.div (local.get $half_height) (local.get $ppu_f64))))
 
     (loop $pixels
-      (block $exit_pixels
-        ;; Read current Mandelbrot pixel then increment and write it atomically
-        (local.set $this_pixel (i32.atomic.rmw.add (i32.const 0) (i32.const 1)))
+      ;; Read current Mandelbrot pixel then increment and write it atomically
+      (local.set $this_pixel (i32.atomic.rmw.add (i32.const 0) (i32.const 1)))
 
-        ;; Have all the pixels been plotted?
-        (br_if $exit_pixels (i32.ge_u (local.get $this_pixel) (local.get $pixel_count)))
+      ;; Should we continue plotting pixels?
+      (if (i32.gt_u (local.get $pixel_count) (local.get $this_pixel))
+        (then
+          ;; Derive $x_pos and $y_pos from $this_pixel
+          (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
+          (local.set $y_pos (i32.div_u (local.get $this_pixel) (local.get $width)))
 
-        ;; Derive $x_pos and $y_pos from $this_pixel
-        (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
-        (local.set $y_pos (i32.div_u (local.get $this_pixel) (local.get $width)))
+          ;; Translate X and Y positions to X and Y coordinates
+          (local.set $x_coord
+            (f64.add (local.get $temp_x_coord) (f64.div (f64.convert_i32_u (local.get $x_pos)) (local.get $ppu_f64)))
+          )
+          (local.set $y_coord
+            (f64.add (local.get $temp_y_coord) (f64.div (f64.convert_i32_u (local.get $y_pos)) (local.get $ppu_f64)))
+          )
 
-        ;; Translate X and Y positions to X and Y coordinates
-        (local.set $x_coord
-          (f64.add (local.get $temp_x_coord) (f64.div (f64.convert_i32_u (local.get $x_pos)) (local.get $ppu_f64)))
-        )
-        (local.set $y_coord
-          (f64.add (local.get $temp_y_coord) (f64.div (f64.convert_i32_u (local.get $y_pos)) (local.get $ppu_f64)))
-        )
+          ;; Memory offset of current pixel $pixel_offset = $mandel_img_offset + ($this_pixel * 4)
+          (local.set $pixel_offset
+            (i32.add (global.get $mandel_img_offset) (i32.shl (local.get $this_pixel) (i32.const 2)))
+          )
 
-        ;; Memory offset of current pixel $pixel_offset = $mandel_img_offset + ($this_pixel * 4)
-        (local.set $pixel_offset
-          (i32.add (global.get $mandel_img_offset) (i32.shl (local.get $this_pixel) (i32.const 2)))
-        )
+          ;; Calculate the current pixel's iteration value
+          (local.set $pixel_val
+            (call $gen_mandel_pixel (local.get $x_coord) (local.get $y_coord) (local.get $max_iters))
+          )
 
-        ;; Calculate the current pixel's iteration value
-        (local.set $pixel_val
-          (call $gen_mandel_pixel (local.get $x_coord) (local.get $y_coord) (local.get $max_iters))
-        )
-
-        ;; Write pixel colour
-        (i32.store
-          (local.get $pixel_offset)
-          (if (result i32)
-              (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
-            (then
-              ;; Any pixel that hits $max_iters is arbitrarily set to black
-              (global.get $BLACK)
-            )
-            (else
-              ;; Fetch colour from palette
-              (i32.load (i32.add (global.get $palette_offset) (i32.shl (local.get $pixel_val) (i32.const 2))))
+          ;; Write pixel colour
+          (i32.store
+            (local.get $pixel_offset)
+            (if (result i32)
+                (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
+              (then
+                ;; Any pixel that hits $max_iters is arbitrarily set to black
+                (global.get $BLACK)
+              )
+              (else
+                ;; Fetch colour from palette
+                (i32.load (i32.add (global.get $palette_offset) (i32.shl (local.get $pixel_val) (i32.const 2))))
+              )
             )
           )
-        )
 
-        br $pixels
+          br $pixels
+        )
       )
     )
   )
@@ -280,69 +280,69 @@
 
     ;; Iterate all pixels in the Julia set
     (loop $pixels
-      (block $exit_pixels
-        ;; Read current Julia Set pixel then increment and write it atomically
-        (local.set $this_pixel (i32.atomic.rmw.add (i32.const 4) (i32.const 1)))
+      ;; Read current Julia Set pixel then increment and write it atomically
+      (local.set $this_pixel (i32.atomic.rmw.add (i32.const 4) (i32.const 1)))
 
-        ;; Have all the pixels been plotted?
-        (br_if $exit_pixels (i32.ge_u (local.get $this_pixel) (local.get $pixel_count)))
+      ;; Should we continue plotting pixels?
+      (if (i32.gt_u (local.get $pixel_count) (local.get $this_pixel))
+        (then
+          ;; Derive $x_pos and $y_pos from $this_pixel
+          (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
+          (local.set $y_pos (i32.div_u (local.get $this_pixel) (local.get $width)))
 
-        ;; Derive $x_pos and $y_pos from $this_pixel
-        (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
-        (local.set $y_pos (i32.div_u (local.get $this_pixel) (local.get $width)))
-
-        ;; Translate X and Y pixels to X and Y coordinates
-        (local.set $x_coord
-          (f64.div
-            (f64.sub (f64.convert_i32_u (local.get $x_pos)) (local.get $half_width))
-            (local.get $j_ppu)
-          )
-        )
-        (local.set $y_coord
-          (f64.neg
+          ;; Translate X and Y pixels to X and Y coordinates
+          (local.set $x_coord
             (f64.div
-              (f64.sub (f64.convert_i32_u (local.get $y_pos)) (local.get $half_height))
+              (f64.sub (f64.convert_i32_u (local.get $x_pos)) (local.get $half_width))
               (local.get $j_ppu)
             )
           )
-        )
-
-        ;; Calculate the current pixel's iteration value
-        (local.set $pixel_val
-          (call $escape_time_mj
-            (local.get $mandel_x_f64)
-            (local.get $mandel_y_f64)
-            (local.get $x_coord)
-            (local.get $y_coord)
-            (local.get $max_iters)
-          )
-        )
-
-        ;; Memory offset of current row = $julia_img_offset + ($this_pixel + $width * 4)
-        (local.set $pixel_offset
-          (i32.add
-            (global.get $julia_img_offset)
-            (i32.shl (local.get $this_pixel) (i32.const 2))
-          )
-        )
-
-        ;; Write pixel colour
-        (i32.atomic.store
-          (local.get $pixel_offset)
-          (if (result i32)
-              (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
-            (then
-              ;; Any pixel that hits $max_iters is arbitrarily set to black
-              (global.get $BLACK)
-            )
-            (else
-              ;; Fetch colour from palette
-              (i32.load (i32.add (global.get $palette_offset) (i32.shl (local.get $pixel_val) (i32.const 2))))
+          (local.set $y_coord
+            (f64.neg
+              (f64.div
+                (f64.sub (f64.convert_i32_u (local.get $y_pos)) (local.get $half_height))
+                (local.get $j_ppu)
+              )
             )
           )
-        )
 
-        br $pixels
+          ;; Calculate the current pixel's iteration value
+          (local.set $pixel_val
+            (call $escape_time_mj
+              (local.get $mandel_x_f64)
+              (local.get $mandel_y_f64)
+              (local.get $x_coord)
+              (local.get $y_coord)
+              (local.get $max_iters)
+            )
+          )
+
+          ;; Memory offset of current row = $julia_img_offset + ($this_pixel + $width * 4)
+          (local.set $pixel_offset
+            (i32.add
+              (global.get $julia_img_offset)
+              (i32.shl (local.get $this_pixel) (i32.const 2))
+            )
+          )
+
+          ;; Write pixel colour
+          (i32.atomic.store
+            (local.get $pixel_offset)
+            (if (result i32)
+                (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
+              (then
+                ;; Any pixel that hits $max_iters is arbitrarily set to black
+                (global.get $BLACK)
+              )
+              (else
+                ;; Fetch colour from palette
+                (i32.load (i32.add (global.get $palette_offset) (i32.shl (local.get $pixel_val) (i32.const 2))))
+              )
+            )
+          )
+
+          br $pixels
+        )
       )
     )
   )
