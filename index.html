@@ -147,10 +147,9 @@ mCanvas.addEventListener('mouseout',  mouse_up, false)
 
 const mContext    = mCanvas.getContext('2d')
 const mImage      = mContext.createImageData(mCanvas.width, mCanvas.height)
-const mImageSize  = mCanvas.width * mCanvas.height * 4
-const mImagePages = Math.ceil(mImageSize / WASM_PAGE_SIZE)
+const mImagePages = Math.ceil(mImage.data.length / WASM_PAGE_SIZE)
 const mImageStart = COUNTERS_LEN
-const mImageEnd   = mImageStart + mImageSize
+const mImageEnd   = mImageStart + mImage.data.length
 
 const jCanvas  = $id('juliaImage')
 jCanvas.width  = DEFAULT_CANVAS_WIDTH
@@ -158,14 +157,13 @@ jCanvas.height = DEFAULT_CANVAS_HEIGHT
 
 const jContext    = jCanvas.getContext('2d')
 const jImage      = jContext.createImageData(jCanvas.width, jCanvas.height)
-const jImageSize  = jCanvas.width * jCanvas.height * 4
-const jImagePages = Math.ceil(jImageSize / WASM_PAGE_SIZE)
+const jImagePages = Math.ceil(jImage.data.length / WASM_PAGE_SIZE)
 const jImageStart = mImagePages * WASM_PAGE_SIZE
-const jImageEnd   = jImageStart + jImageSize
+const jImageEnd   = jImageStart + jImage.data.length
 
 /* ---------------------------------------------------------------------------------------------------------------------
 * Allocate WASM memory
-* 4 pages for the colour palette allows enough colours for an image calculated to an iteration depth of 32768
+* 4 pages for the colour palette allows enough colours for an image calculated to an iteration depth of 65536
 */
 const palettePages = 4
 

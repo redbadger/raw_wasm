@@ -25,18 +25,21 @@
     (local $iters i32)
     (local $new_x f64)
     (local $new_y f64)
+    (local $x_sqr f64)
+    (local $y_sqr f64)
 
     (loop $next_iter
-      ;; Continue the loop only if we're still within both the bailout value and the iteration limit
+      ;; Stored x^2 and y^2 values
+      (local.set $x_sqr (f64.mul (local.get $x) (local.get $x)))
+      (local.set $y_sqr (f64.mul (local.get $y) (local.get $y)))
+
+      ;; Only continue the loop if we're still within both the bailout value and the iteration limit
       (if
         (i32.and
+          ;; $BAILOUT > ($x^2 + $y^2)?
           (f64.gt
-            ;; $BAILOUT > ($x^2 + $y^2)?
             (global.get $BAILOUT)
-            (f64.add
-              (f64.mul (local.get $x) (local.get $x))
-              (f64.mul (local.get $y) (local.get $y))
-            )
+            (f64.add (local.get $x_sqr) (local.get $y_sqr))
           )
           ;; $max_iters > iters?
           (i32.gt_u (local.get $max_iters) (local.get $iters))
@@ -47,10 +50,7 @@
             $new_x
             (f64.add
               (local.get $mandel_x)
-              (f64.sub
-                (f64.mul (local.get $x) (local.get $x))
-                (f64.mul (local.get $y) (local.get $y))
-              )
+              (f64.sub (local.get $x_sqr) (local.get $y_sqr))
             )
           )
           ;; $new_y = $mandel_y + ($y * 2 * $x)
