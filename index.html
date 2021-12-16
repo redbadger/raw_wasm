@@ -410,11 +410,8 @@ const rebuild_workers = () => {
 
   if (window.worker_list === undefined) window.worker_list = new Array()
 
-  // If the existing worker_list is empty or the number of workers has changed, terminate any existing workers before
-  // then create new ones
-  if (window.worker_list.length === 0 ||
-      (window.worker_list.length > 0 &&
-       window.worker_list.length !== img_params.workers.currentValue)) {
+  // If the number of workers has changed, terminate any existing workers before creating new ones
+  if (window.worker_list.length !== img_params.workers.currentValue) {
     // Terminate any workers that might currently be active
     window.worker_list.map(w => w.terminate() )
     window.worker_list = new Array()

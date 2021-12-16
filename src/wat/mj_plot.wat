@@ -15,53 +15,53 @@
   ;; -------------------------------------------------------------------------------------------------------------------
   ;; Escape time algorithm for calculating either the Mandelbrot or Julia sets
   (func $escape_time_mj
-        (param $mandel_x  f64)
-        (param $mandel_y  f64)
-        (param $x         f64)
-        (param $y         f64)
+        (param $zx  f64)
+        (param $zy  f64)
+        (param $cx  f64)
+        (param $cy  f64)
         (param $max_iters i32)
         (result i32)
 
     (local $iters i32)
     (local $new_x f64)
     (local $new_y f64)
-    (local $x_sqr f64)
-    (local $y_sqr f64)
+    (local $cx_sqr f64)
+    (local $cy_sqr f64)
 
     (loop $next_iter
       ;; Stored x^2 and y^2 values
-      (local.set $x_sqr (f64.mul (local.get $x) (local.get $x)))
-      (local.set $y_sqr (f64.mul (local.get $y) (local.get $y)))
+      (local.set $cx_sqr (f64.mul (local.get $cx) (local.get $cx)))
+      (local.set $cy_sqr (f64.mul (local.get $cy) (local.get $cy)))
 
       ;; Only continue the loop if we're still within both the bailout value and the iteration limit
       (if
         (i32.and
-          ;; $BAILOUT > ($x^2 + $y^2)?
+          ;; $BAILOUT > ($cx^2 + $cy^2)?
           (f64.gt
             (global.get $BAILOUT)
-            (f64.add (local.get $x_sqr) (local.get $y_sqr))
+            (f64.add (local.get $cx_sqr) (local.get $cy_sqr))
           )
           ;; $max_iters > iters?
           (i32.gt_u (local.get $max_iters) (local.get $iters))
         )
         (then
-          ;; $new_x = $mandel_x + ($x^2 - $y^2)
+          ;; $new_x = $zx + ($cx^2 - $cy^2)
           (local.set
             $new_x
             (f64.add
-              (local.get $mandel_x)
-              (f64.sub (local.get $x_sqr) (local.get $y_sqr))
+              (local.get $zx)
+              (f64.sub (local.get $cx_sqr) (local.get $cy_sqr))
             )
           )
-          ;; $new_y = $mandel_y + ($y * 2 * $x)
+          ;; $new_y = $zy + (2 * $cy * $cx)
           (local.set
             $new_y
-            (f64.add (local.get $mandel_y)
-                     (f64.mul (local.get $y) (f64.add (local.get $x) (local.get $x)))
+            (f64.add (local.get $zy)
+                     (f64.mul (local.get $cy) (f64.add (local.get $cx) (local.get $cx)))
             )
           )
-          (local.set $x     (local.get $new_x))
-          (local.set $y     (local.get $new_y))
+          (local.set $cx    (local.get $new_x))
+          (local.set $cy    (local.get $new_y))
           (local.set $iters (i32.add (local.get $iters) (i32.const 1)))
 
           br $next_iter
@@ -138,34 +138,43 @@
     (local $y_coord f64)
     (local $temp_x_coord f64)
     (local $temp_y_coord f64)
-    (local $pixel_offset i32)
     (local $pixel_val i32)
     (local $pixel_colour i32)
     (local $pixel_count i32)
     (local $this_pixel i32)
     (local $ppu_f64 f64)
 
-    (local $half_width f64)
-    (local $half_height f64)
-
     (local.set $pixel_count (i32.mul (local.get $width) (local.get $height)))
-    (local.set $half_width  (f64.convert_i32_u (i32.shr_u (local.get $width) (i32.const 1))))
-    (local.set $half_height (f64.convert_i32_u (i32.shr_u (local.get $height) (i32.const 1))))
-
-    (local.set $pixel_offset (global.get $mandel_img_offset))
     (local.set $ppu_f64 (f64.convert_i32_u (local.get $ppu)))
 
     ;; Intermediate X and Y coords based on static values
     ;; $origin - ($half_dimension / $ppu)
-    (local.set $temp_x_coord (f64.sub (local.get $origin_x) (f64.div (local.get $half_width) (local.get $ppu_f64))))
-    (local.set $temp_y_coord (f64.sub (local.get $origin_y) (f64.div (local.get $half_height) (local.get $ppu_f64))))
+    (local.set $temp_x_coord
+      (f64.sub
+        (local.get $origin_x)
+        (f64.div
+          (f64.convert_i32_u (i32.shr_u (local.get $width) (i32.const 1)))
+          (local.get $ppu_f64)
+        )
+      )
+    )
+    (local.set $temp_y_coord
+      (f64.sub
+        (local.get $origin_y)
+        (f64.div
+          (f64.convert_i32_u (i32.shr_u (local.get $height) (i32.const 1)))
+          (local.get $ppu_f64)
+        )
+      )
+    )
 
     (loop $pixels
-      ;; Read current Mandelbrot pixel then increment and write it atomically
-      (local.set $this_pixel (i32.atomic.rmw.add (i32.const 0) (i32.const 1)))
-
       ;; Should we continue plotting pixels?
-      (if (i32.gt_u (local.get $pixel_count) (local.get $this_pixel))
+      (if (i32.gt_u
+            (local.get $pixel_count)
+            ;; Read current Mandelbrot pixel then increment and write it atomically
+            (local.tee $this_pixel (i32.atomic.rmw.add (i32.const 0) (i32.const 1)))
+          )
         (then
           ;; Derive $x_pos and $y_pos from $this_pixel
           (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
@@ -179,11 +188,6 @@
             (f64.add (local.get $temp_y_coord) (f64.div (f64.convert_i32_u (local.get $y_pos)) (local.get $ppu_f64)))
           )
 
-          ;; Memory offset of current pixel $pixel_offset = $mandel_img_offset + ($this_pixel * 4)
-          (local.set $pixel_offset
-            (i32.add (global.get $mandel_img_offset) (i32.shl (local.get $this_pixel) (i32.const 2)))
-          )
-
           ;; Calculate the current pixel's iteration value
           (local.set $pixel_val
             (call $gen_mandel_pixel (local.get $x_coord) (local.get $y_coord) (local.get $max_iters))
@@ -191,7 +195,8 @@
 
           ;; Write pixel colour
           (i32.store
-            (local.get $pixel_offset)
+            ;; Memory offset of current pixel = $mandel_img_offset + ($this_pixel * 4)
+            (i32.add (global.get $mandel_img_offset) (i32.shl (local.get $this_pixel) (i32.const 2)))
             (if (result i32)
                 (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
               (then
@@ -231,7 +236,6 @@
     (local $half_height f64)
     (local $mandel_x_f64 f64)
     (local $mandel_y_f64 f64)
-    (local $pixel_offset i32)  ;; Memory offset of calculated pixel
     (local $pixel_val i32)     ;; Iteration value of calculated pixel
     (local $pixel_colour i32)  ;; Calculated pixel colour
     (local $pixel_count i32)
@@ -245,9 +249,6 @@
 
     ;; Julia set images always have a fixed zoom level of 200 pixels per unit
     (local.set $j_ppu (f64.const 200))
-
-    ;; Point to the start of the Julia set memory space
-    (local.set $pixel_offset (global.get $julia_img_offset))
 
     ;; Convert mouse position over Mandelbrot set to complex plane coordinates
     (local.set $mandel_x_f64
@@ -280,11 +281,12 @@
 
     ;; Iterate all pixels in the Julia set
     (loop $pixels
-      ;; Read current Julia Set pixel then increment and write it atomically
-      (local.set $this_pixel (i32.atomic.rmw.add (i32.const 4) (i32.const 1)))
-
       ;; Should we continue plotting pixels?
-      (if (i32.gt_u (local.get $pixel_count) (local.get $this_pixel))
+      (if (i32.gt_u
+            (local.get $pixel_count)
+            ;; Read current Julia Set pixel then increment and write it atomically
+            (local.tee $this_pixel (i32.atomic.rmw.add (i32.const 4) (i32.const 1)))
+          )
         (then
           ;; Derive $x_pos and $y_pos from $this_pixel
           (local.set $x_pos (i32.rem_u (local.get $this_pixel) (local.get $width)))
@@ -317,17 +319,10 @@
             )
           )
 
-          ;; Memory offset of current row = $julia_img_offset + ($this_pixel + $width * 4)
-          (local.set $pixel_offset
-            (i32.add
-              (global.get $julia_img_offset)
-              (i32.shl (local.get $this_pixel) (i32.const 2))
-            )
-          )
-
           ;; Write pixel colour
-          (i32.atomic.store
-            (local.get $pixel_offset)
+          (i32.store
+            ;; Memory offset of current row = $julia_img_offset + ($this_pixel + $width * 4)
+            (i32.add (global.get $julia_img_offset) (i32.shl (local.get $this_pixel) (i32.const 2)))
             (if (result i32)
                 (i32.ge_u (local.get $pixel_val) (local.get $max_iters))
               (then
