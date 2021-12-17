@@ -10,7 +10,7 @@ Two of the key advantages of writing in raw WebAssembly Text (WAT) are that you 
 Some would argue that us humans need not concern ourselves too deeply with these tasks because modern compilers are efficient enough to relieve us of this particular workload.
 Well, maybe, kind of &mdash; but no, not really.
 
-By writing the computationally intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the `.wasm` binary files down to just 493 bytes!
+By writing the computationally intensive part of this application directly in thread-enabled WebAssembly Text, I have managed to get the `.wasm` binary file for plotting the fractal images down to just 493 bytes!
 However, the equivalent code written in Rust and then compiled to WASM using `wasm-pack` is just over 74Kb (about 150 times larger).[^1]
 
 ## Objectives
@@ -89,5 +89,5 @@ Enjoy!
 
 ---
 
-[^1]: To be fair to Rust and `wasm-pack`, there are certain optimisation features in `cargo` that could have been used to reduce the size of the generated .wasm file.  Nonetheless, the generated file would still have been an order of magnitude larger.
+[^1]: To be fair to Rust and `wasm-pack`, there are certain optimisation features in `cargo` that could have been used to reduce the size of the generated .wasm file.  Nonetheless, the generated file would still have been approximately an order of magnitude larger.
 [^2]: This is a requirement because browsers do not allow `.wasm` files to be transfered using the `file://` protocol.
